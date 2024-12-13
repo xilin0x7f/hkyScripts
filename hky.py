@@ -1,5 +1,7 @@
 # Author: 赩林, xilin0x7f@163.com
 import argparse
+import inspect
+
 import numpy as np
 import nibabel as nib
 
@@ -20,6 +22,13 @@ def volume_extract(volume_path, mask_path, save_path):
     mask_data = mask_img.get_fdata()
     np.savetxt(save_path, volume_data[mask_data > 0])
 
+def setup_volume_extract(subparsers):
+    parser = subparsers.add_parser("volume-extract", help="extract value from nifti file in mask")
+    parser.set_defaults(func=volume_extract)
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("mask_path", help="mask path")
+    parser.add_argument("save_path", help="save path, txt format")
+
 @arg_extractor
 def volume_restore(data_path, mask_path, save_path):
     data = np.loadtxt(data_path)
@@ -35,33 +44,60 @@ def volume_restore(data_path, mask_path, save_path):
     img_header = nib.Nifti1Image(img_data, header=mask_img.header, affine=mask_img.header.get_best_affine())
     nib.save(img_header, save_path)
 
+def setup_volume_restore(subparsers):
+    parser = subparsers.add_parser("volume-restore", help="restore nifti file in mask")
+    parser.set_defaults(func=volume_restore)
+    parser.add_argument("data_path", help="data path")
+    parser.add_argument("mask_path", help="mask path")
+    parser.add_argument("save_path", help="save path")
+
 @arg_extractor
-def command3(input, output, i=10):
-    print(f"Running command3 with input: {input} and output: {output}, i: {i}")
+def cifti_array2map(atlas, data, out, delimiter=' ', transpose=False, skiprows=0):
+    atlas = nib.load(atlas)
+    data = np.loadtxt(data, delimiter=delimiter, skiprows=skiprows)
+    if transpose:
+        data = data.T
+
+    atlas_data = atlas.get_fdata()
+    if np.ndim(data) == 1:
+        new_data = np.zeros(atlas_data.shape)
+        for i, value in enumerate(data):
+            new_data[atlas_data == i + 1] = value
+    else:
+        new_data = np.zeros([data.shape[1], atlas_data.shape[1]])
+        for i, value in enumerate(data):
+            new_data[:, atlas_data[0, :] == i + 1] = value[:, np.newaxis]
+
+    ax0 = nib.cifti2.cifti2_axes.ScalarAxis(name=[f"#{i+1}" for i in range(new_data.shape[0])])
+    ax1 = atlas.header.get_axis(1)
+    header = nib.Cifti2Header.from_axes((ax0, ax1))
+    new_img = nib.Cifti2Image(new_data, header, atlas.nifti_header)
+    nib.save(new_img, out)
+
+def setup_cifti_array2map(subparsers):
+    parser = subparsers.add_parser("cifti-array2map", help="convert cifti atlas array to map")
+    parser.set_defaults(func=cifti_array2map)
+    parser.add_argument('atlas', help='dlabel file')
+    parser.add_argument('data', help='csv file, per row is a brain region')
+    parser.add_argument('out', help='output dscalar file')
+    parser.add_argument('-d', '--delimiter', default=' ', help='delimiter for txt file')
+    parser.add_argument('-t', '--transpose', action='store_true', help='transpose data')
+    parser.add_argument('-s', '--skiprows', type=int, default=0, help='skip first rows')
 
 def main():
     parser = argparse.ArgumentParser(description="A script supporting multiple subcommands.")
     subparsers = parser.add_subparsers(dest="command", required=True, help="Subcommand to run")
 
-    parser1 = subparsers.add_parser("volume-extract", help="extract value from nifti file in mask")
-    parser1.set_defaults(func=volume_extract)
-    parser1.add_argument("volume_path", help="volume path")
-    parser1.add_argument("mask_path", help="mask path")
-    parser1.add_argument("save_path", help="save path, txt format")
+    # Dynamically find and register all setup_* functions
+    current_module = inspect.getmembers(inspect.getmodule(main), inspect.isfunction)
 
-    parser2 = subparsers.add_parser("volume-restore", help="restore nifti file in mask")
-    parser2.set_defaults(func=volume_restore)
-    parser2.add_argument("data_path")
-    parser2.add_argument("mask_path")
-    parser2.add_argument("save_path")
+    setup_functions = [func for name, func in current_module if name.startswith("setup_")]
 
-    parser3 = subparsers.add_parser("command3", help="Run the second command")
-    parser3.set_defaults(func=command3)
-    parser3.add_argument("input", help="Input file for command2")
-    parser3.add_argument("output", type=int, help="Parameter for command2")
-    parser3.add_argument("-i", type=int, help="Parameter for command2")
+    for setup_func in setup_functions:
+        setup_func(subparsers)
 
     args = parser.parse_args()
+    # print(vars(args))
     args.func(args)
 
 
