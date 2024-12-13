@@ -17,7 +17,7 @@ def arg_extractor(func):
     return wrapper
 
 def setup_dmri_amico_fit(subparsers):
-    parser = subparsers.add_parser("dmri-amico-fit", help="dwi-fit-noddi")
+    parser = subparsers.add_parser("dmri-amico-fit", help="dmri-amico-fit")
     parser.set_defaults(func=arg_extractor(dmri_amico_fit))
     parser.add_argument("dwi_path")
     parser.add_argument("bvec_path")
