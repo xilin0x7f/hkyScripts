@@ -11,7 +11,7 @@ def dmri_amico_fit(dwi_path, bvec_path, bval_path, mask_path, model="NODDI"):
         b0_thr=10
     )
     ae.set_model(model)
-    ae.generate_kernels()
+    ae.generate_kernels(regenerate=True)
     ae.load_kernels()
     ae.fit()
     ae.save_results()
