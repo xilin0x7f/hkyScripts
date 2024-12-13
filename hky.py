@@ -5,6 +5,7 @@ import inspect
 
 import numpy as np
 import nibabel as nib
+from hkypy.dwi_fit import dmri_amico_fit
 
 def arg_extractor(func):
     def wrapper(args):
@@ -14,6 +15,15 @@ def arg_extractor(func):
         }
         return func(**func_args)
     return wrapper
+
+def setup_dmri_amico_fit(subparsers):
+    parser = subparsers.add_parser("dmri-amico-fit", help="dwi-fit-noddi")
+    parser.set_defaults(func=arg_extractor(dmri_amico_fit))
+    parser.add_argument("dwi_path")
+    parser.add_argument("bvec_path")
+    parser.add_argument("bval_path")
+    parser.add_argument('mask_path')
+    parser.add_argument('model', nargs="?", default="NODDI")
 
 @arg_extractor
 def volume_extract(volume_path, mask_path, save_path):
