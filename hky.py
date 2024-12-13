@@ -1,5 +1,7 @@
 # Author: 赩林, xilin0x7f@163.com
 import argparse
+import numpy as np
+import nibabel as nib
 
 def arg_extractor(func):
     def wrapper(args):
@@ -11,14 +13,27 @@ def arg_extractor(func):
     return wrapper
 
 @arg_extractor
-def command1(input, output):
-    """Handle the first subcommand."""
-    print(f"Running command1 with input: {input} and output: {output}")
+def volume_extract(volume_path, mask_path, save_path):
+    volume_img = nib.load(volume_path)
+    mask_img = nib.load(mask_path)
+    volume_data = volume_img.get_fdata()
+    mask_data = mask_img.get_fdata()
+    np.savetxt(save_path, volume_data[mask_data > 0])
 
 @arg_extractor
-def command2(input, param):
-    """Handle the second subcommand."""
-    print(f"Running command2 with input: {input} and parameters: {param}")
+def volume_restore(data_path, mask_path, save_path):
+    data = np.loadtxt(data_path)
+    mask_img = nib.load(mask_path)
+    mask_data = mask_img.get_fdata()
+    if data.ndim == 2:
+        img_data = np.zeros((*mask_data.shape, data.shape[1]))
+        img_data[mask_data > 0, :] = data
+    else:
+        img_data = np.zeros(mask_data.shape)
+        img_data[mask_data > 0] = data
+
+    img_header = nib.Nifti1Image(img_data, header=mask_img.header, affine=mask_img.header.get_best_affine())
+    nib.save(img_header, save_path)
 
 @arg_extractor
 def command3(input, output, i=10):
@@ -28,15 +43,17 @@ def main():
     parser = argparse.ArgumentParser(description="A script supporting multiple subcommands.")
     subparsers = parser.add_subparsers(dest="command", required=True, help="Subcommand to run")
 
-    parser_command1 = subparsers.add_parser("command1", help="Run the first command")
-    parser_command1.add_argument("-i", "--input", required=True, help="Input file for command1")
-    parser_command1.add_argument("-o", "--output", required=True, help="Output file for command1")
-    parser_command1.set_defaults(func=command1)
+    parser1 = subparsers.add_parser("volume-extract", help="extract value from nifti file in mask")
+    parser1.set_defaults(func=volume_extract)
+    parser1.add_argument("volume_path", help="volume path")
+    parser1.add_argument("mask_path", help="mask path")
+    parser1.add_argument("save_path", help="save path, txt format")
 
-    parser_command2 = subparsers.add_parser("command2", help="Run the second command")
-    parser_command2.add_argument("-i", "--input", required=True, help="Input file for command2")
-    parser_command2.add_argument("-p", "--param", type=int, required=True, help="Parameter for command2")
-    parser_command2.set_defaults(func=command2)
+    parser_2 = subparsers.add_parser("volume-restore", help="restore nifti file in mask")
+    parser_2.set_defaults(func=volume_restore)
+    parser_2.add_argument("data_path")
+    parser_2.add_argument("mask_path")
+    parser_2.add_argument("save_path")
 
     parser_command3 = subparsers.add_parser("command3", help="Run the second command")
     parser_command3.set_defaults(func=command3)
