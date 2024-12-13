@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/bin/env python
 # Author: 赩林, xilin0x7f@163.com
 import argparse
 import inspect
