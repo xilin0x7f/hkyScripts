@@ -7,6 +7,7 @@ from hkypy.cifti_func import cifti_array2map
 from hkypy.dwi_fit import dmri_amico_fit
 from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import volume_fpca, volume_4d2rgb, volume_extract, volume_restore
+from hkypy.combat import text_combat, volume_combat
 
 def arg_extractor(func):
     def wrapper(args):
@@ -36,7 +37,7 @@ def setup_volume_extract(subparsers):
 def setup_volume_restore(subparsers):
     parser = subparsers.add_parser("volume-restore", help="restore nifti file in mask")
     parser.set_defaults(func=arg_extractor(volume_restore))
-    parser.add_argument("data_path", help="data path")
+    parser.add_argument("data", help="data path or data")
     parser.add_argument("mask_path", help="mask path")
     parser.add_argument("out_path", help="out path")
 
@@ -69,6 +70,31 @@ def setup_surface_get_parc_coord(subparsers):
     parser.add_argument("surf_path", help="surface path")
     parser.add_argument("parc_path", help="parcellation path")
     parser.add_argument("out_path", help="out path")
+
+def setup_text_combat(subparsers):
+    parser = subparsers.add_parser("text-combat", help="text combat")
+    parser.set_defaults(func=arg_extractor(text_combat))
+    parser.add_argument("text_path", help="data text_path")
+    parser.add_argument("subj_info_path", help="subj info csv path")
+    parser.add_argument("out_path", help="output data after combat path")
+    parser.add_argument('-b', '--batch', default='site', help='site var name')
+    parser.add_argument('-con', '--con', default=None, help='continuous')
+    parser.add_argument('-cat', '--cat', default=None, help='categorical')
+    parser.add_argument('-n', '--neb', help='-n not use eb; else use eb', action='store_false', dest='eb')
+    parser.add_argument('-f', '--factor', default=0, help='factor, set 0 to auto estimate', type=int)
+
+def setup_volume_combat(subparsers):
+    parser = subparsers.add_parser("volume-combat", help="volume combat")
+    parser.set_defaults(func=arg_extractor(volume_combat))
+    parser.add_argument("volume_path", help="data volume_path")
+    parser.add_argument("mask_path", help="mask volume_path")
+    parser.add_argument("subj_info_path", help="subj info csv path")
+    parser.add_argument("out_path", help="output data after combat path")
+    parser.add_argument('-b', '--batch', default='site', help='site var name')
+    parser.add_argument('-con', '--con', default=None, help='continuous')
+    parser.add_argument('-cat', '--cat', default=None, help='categorical')
+    parser.add_argument('-n', '--neb', help='-n not use eb; else use eb', action='store_false', dest='eb')
+    parser.add_argument('-f', '--factor', default=0, help='factor, set 0 to auto estimate', type=int)
 
 def main():
     parser = argparse.ArgumentParser(description="赩林")

@@ -72,15 +72,21 @@ def volume_4d2rgb(volume_path, out_path):
     nii_img = nib.Nifti1Image(nii_data, nii_header.affine)
     nib.save(nii_img, out_path)
 
-def volume_extract(volume_path, mask_path, out_path):
+def volume_extract(volume_path, mask_path, out_path=None):
     volume_img = nib.load(volume_path)
     mask_img = nib.load(mask_path)
     volume_data = volume_img.get_fdata()
     mask_data = mask_img.get_fdata()
-    np.savetxt(out_path, volume_data[mask_data > 0])
+    if out_path is not None:
+        np.savetxt(out_path, volume_data[mask_data > 0])
 
-def volume_restore(data_path, mask_path, out_path):
-    data = np.loadtxt(data_path)
+    return volume_data[mask_data > 0]
+
+def volume_restore(data, mask_path, out_path):
+    import os
+    if isinstance(data, str) and os.path.exists(data):
+        data = np.loadtxt(data)
+
     mask_img = nib.load(mask_path)
     mask_data = mask_img.get_fdata()
     if data.ndim == 2:
