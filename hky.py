@@ -121,7 +121,7 @@ def setup_get_motion(subparsers):
     parser.add_argument("files_path", nargs="+", help="motion files path")
 
 def main():
-    parser = argparse.ArgumentParser(description="赩林")
+    parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")
     subparsers = parser.add_subparsers(dest="command", required=True, help="Subcommand to run")
 
     # Dynamically find and register all setup_* functions
