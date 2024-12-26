@@ -8,6 +8,8 @@ from hkypy.dwi_fit import dmri_amico_fit
 from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import volume_fpca, volume_4d2rgb, volume_extract, volume_restore
 from hkypy.combat import text_combat, volume_combat
+from hkypy.metric_func import metric_report
+from hkypy.utils import get_motion
 
 def arg_extractor(func):
     def wrapper(args):
@@ -95,6 +97,28 @@ def setup_volume_combat(subparsers):
     parser.add_argument('-cat', '--cat', default=None, help='categorical')
     parser.add_argument('-n', '--neb', help='-n not use eb; else use eb', action='store_false', dest='eb')
     parser.add_argument('-f', '--factor', default=0, help='factor, set 0 to auto estimate', type=int)
+
+# def metric_report(metric_path, surface_path, atlas_path, threshold, minimum_area, output_prefix, less_than=False):
+def setup_metric_report(subparsers):
+    parser = subparsers.add_parser("metric-report", help="metric report")
+    parser.set_defaults(func=arg_extractor(metric_report))
+    parser.add_argument('metric_path', help='input a metric file for report')
+    parser.add_argument('-s', '--surface', required=True, nargs='+',
+                        help='input a surface file [and a surface area file]', dest='surface_path')
+    parser.add_argument('-a', '--atlas', required=True, help='input a atlas file for report brain regions',
+                        dest='atlas_path')
+    parser.add_argument('-o', '--output', required=True, help='out prefix')
+    parser.add_argument('-t', '--threshold', required=False, default=1, help='value-threshold for wb_command')
+    parser.add_argument('--minimum-area', required=False, default=0, help='minimum area for wb_command')
+    parser.add_argument('-less-than', action='store_true')
+
+def setup_get_motion(subparsers):
+    parser = subparsers.add_parser("get-motion", help="""
+    get motion from xcpd results, example: hky.py get-motion motion.csv sub-*/ses-*/func/*_task-rest_motion.tsv
+    """)
+    parser.set_defaults(func=arg_extractor(get_motion))
+    parser.add_argument("output_path", help="output path")
+    parser.add_argument("files_path", nargs="+", help="motion files path")
 
 def main():
     parser = argparse.ArgumentParser(description="赩林")
