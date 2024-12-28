@@ -115,7 +115,7 @@ def cifti_report(
     elif len(cifti_infile_data) < len(cifti_label_data):
         ValueError("cifti file time size is less than label file")
 
-    for darray_idx in range(len(cifti_infile.get_fdata())):
+    for darray_idx in range(len(cifti_infile_data)):
         cluster_all = []
         cluster_size_info_all = []
         cifti_infile_data_c = cifti_infile_data[darray_idx]
@@ -144,8 +144,8 @@ def cifti_report(
                     peak_bm = bm
 
             if peak_bm.brain_structure == 'CIFTI_STRUCTURE_CORTEX_LEFT':
-                peak_coord = surf_lh_vert[np.array(peak_bm._vertex_indices._indices) - peak_bm.index_offset][peak_idx - peak_bm.index_offset]
-                cluster_size = np.sum(area_lh[np.array(peak_bm._vertex_indices._indices) - peak_bm.index_offset][
+                peak_coord = surf_lh_vert[peak_bm._vertex_indices._indices][peak_idx - peak_bm.index_offset]
+                cluster_size = np.sum(area_lh[peak_bm._vertex_indices._indices][
                     (cifti_label_data_c == (label_idx + 1))
                     [peak_bm.index_offset:peak_bm.index_offset + peak_bm.index_count]
                                       ])
@@ -153,14 +153,14 @@ def cifti_report(
                 for inter_label_idx in np.unique(atlas_data[cifti_label_data_c == (label_idx + 1)]):
                     cluster_size_info_all.append([
                         label_idx + 1, atlas_map[inter_label_idx],
-                        np.sum(area_lh[np.array(peak_bm._vertex_indices._indices) - peak_bm.index_offset][
+                        np.sum(area_lh[peak_bm._vertex_indices._indices][
                                    ((cifti_label_data_c == (label_idx + 1)) & (atlas_data == inter_label_idx))
                                    [peak_bm.index_offset:peak_bm.index_offset + peak_bm.index_count]
                                ]),
                         ])
             elif peak_bm.brain_structure == 'CIFTI_STRUCTURE_CORTEX_RIGHT':
-                peak_coord = surf_rh_vert[np.array(peak_bm._vertex_indices._indices) - peak_bm.index_offset][peak_idx - peak_bm.index_offset]
-                cluster_size = np.sum(area_rh[np.array(peak_bm._vertex_indices._indices) - peak_bm.index_offset][
+                peak_coord = surf_rh_vert[peak_bm._vertex_indices._indices][peak_idx - peak_bm.index_offset]
+                cluster_size = np.sum(area_rh[peak_bm._vertex_indices._indices][
                                           (cifti_label_data_c == (label_idx + 1))
                                           [peak_bm.index_offset:peak_bm.index_offset + peak_bm.index_count]
                                       ])
@@ -168,7 +168,7 @@ def cifti_report(
                 for inter_label_idx in np.unique(atlas_data[cifti_label_data_c == (label_idx + 1)]):
                     cluster_size_info_all.append([
                         label_idx + 1, atlas_map[inter_label_idx],
-                        np.sum(area_rh[np.array(peak_bm._vertex_indices._indices) - peak_bm.index_offset][
+                        np.sum(area_rh[peak_bm._vertex_indices._indices][
                                    ((cifti_label_data_c == (label_idx + 1)) & (atlas_data == inter_label_idx))
                                    [peak_bm.index_offset:peak_bm.index_offset + peak_bm.index_count]
                                ]),
