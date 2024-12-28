@@ -4,7 +4,7 @@ import nibabel as nib
 import subprocess
 from .surface_func import compute_surface_area
 
-def metric_find_clusters(metric_path, surface_path, threshold, minimum_area, output_prefix, less_than=False):
+def metric_find_clusters(metric_path, surface_path, threshold, minimum_area, out_prefix, less_than=False):
     command = [
         'wb_command',
         '-metric-find-clusters',
@@ -12,7 +12,7 @@ def metric_find_clusters(metric_path, surface_path, threshold, minimum_area, out
         metric_path,
         threshold,
         minimum_area,
-        str(output_prefix) + '.threshold.label.func.gii'
+        str(out_prefix) + '.threshold.label.func.gii'
     ]
 
     if less_than:
@@ -34,9 +34,9 @@ def metric_find_clusters(metric_path, surface_path, threshold, minimum_area, out
         'wb_command',
         '-metric-math',
         'x * (y >0)',
-        str(output_prefix) + '.threshold.func.gii',
+        str(out_prefix) + '.threshold.func.gii',
         '-var', 'x', metric_path,
-        '-var', 'y', str(output_prefix) + '.threshold.label.func.gii'
+        '-var', 'y', str(out_prefix) + '.threshold.label.func.gii'
     ]
     command = [str(i) for i in command]
 
@@ -48,9 +48,9 @@ def metric_find_clusters(metric_path, surface_path, threshold, minimum_area, out
         ChildProcessError('wb_command failed')
 
 
-def metric_report(metric_path, surface_path, atlas_path, threshold, minimum_area, output_prefix, less_than=False):
+def metric_report(metric_path, surface_path, atlas_path, threshold, minimum_area, out_prefix, less_than=False):
     import pandas as pd
-    metric_find_clusters(metric_path, surface_path, threshold, minimum_area, output_prefix, less_than)
+    metric_find_clusters(metric_path, surface_path, threshold, minimum_area, out_prefix, less_than)
     metric_surface = nib.load(surface_path[0])
     if len(surface_path) == 1:
         vertices_surface, faces_surface = metric_surface.darrays[0].data, metric_surface.darrays[1].data
@@ -59,7 +59,7 @@ def metric_report(metric_path, surface_path, atlas_path, threshold, minimum_area
         metric_area_data = nib.load(surface_path[1]).darrays[0].data
 
     metric_infile = nib.load(metric_path)
-    metric_label = nib.load(str(output_prefix) + '.threshold.label.func.gii')
+    metric_label = nib.load(str(out_prefix) + '.threshold.label.func.gii')
     metric_atlas = nib.load(atlas_path)
 
     metric_surface_data = metric_surface.darrays[0].data
@@ -98,9 +98,7 @@ def metric_report(metric_path, surface_path, atlas_path, threshold, minimum_area
             peak_region = metric_atlas_data_map[metric_atlas_data[peak_vertex_idx]]
             cluster_area = np.sum(metric_area_data[metric_label_c == (label_idx + 1)])
 
-            cluster_all.append(
-                [label_idx+1, peak_vertex_coord[0], peak_vertex_coord[1], peak_vertex_coord[2],
-                 peak_vertex_value, cluster_area, peak_region])
+            cluster_all.append([label_idx+1, *peak_vertex_coord, peak_vertex_value, cluster_area, peak_region])
 
             for inter_label_idx in np.unique(metric_atlas_data[metric_label_c == (label_idx + 1)]):
                 cluster_area_info_all.append([
@@ -114,9 +112,9 @@ def metric_report(metric_path, surface_path, atlas_path, threshold, minimum_area
             columns=['cluster idx', 'coord-x', 'coord-y', 'coord-z', 'peak value', 'area', 'annot']
         )
 
-        cluster_all.to_csv(output_prefix + f'_darray-{darray_idx}_cluster_info.csv', index=False)
+        cluster_all.to_csv(out_prefix + f'_darray-{darray_idx}_cluster_info.csv', index=False)
         cluster_area_info_all = pd.DataFrame(
             cluster_area_info_all,
             columns=['cluster idx', 'region', 'area']
         )
-        cluster_area_info_all.to_csv(output_prefix + f'_darray-{darray_idx}_cluster_info_area.csv', index=False)
+        cluster_area_info_all.to_csv(out_prefix + f'_darray-{darray_idx}_cluster_info_area.csv', index=False)
