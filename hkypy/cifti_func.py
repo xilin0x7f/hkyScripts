@@ -4,6 +4,31 @@ import nibabel as nib
 import subprocess
 from .surface_func import compute_surface_area
 
+def brain_models_are_equal(cifti_header1, cifti_header2):
+    brain_models1 = list(cifti_header1.get_index_map(1).brain_models)
+    brain_models2 = list(cifti_header2.get_index_map(1).brain_models)
+
+    if len(brain_models1) != len(brain_models2):
+        return False
+
+    for bm1, bm2 in zip(brain_models1, brain_models2):
+        if bm1.model_type == "CIFTI_MODEL_TYPE_SURFACE":
+            if (bm1.brain_structure != bm2.brain_structure or
+                bm1.index_offset != bm2.index_offset or
+                bm1.index_count != bm2.index_count or
+                not (bm1._vertex_indices._indices == bm2._vertex_indices._indices)
+            ):
+                return False
+        elif bm1.model_type == "CIFTI_MODEL_TYPE_VOXELS":
+            if (bm1.brain_structure != bm2.brain_structure or
+                bm1.index_offset != bm2.index_offset or
+                bm1.index_count != bm2.index_count or
+                not (bm1._voxel_indices_ijk._indices == bm2._voxel_indices_ijk._indices)
+            ):
+                return False
+
+    return True
+
 def cifti_array2map(atlas_path, data_path, out_path, delimiter=' ', transpose=False, skiprows=0):
     atlas = nib.load(atlas_path)
     data = np.loadtxt(data_path, delimiter=delimiter, skiprows=skiprows)
@@ -100,10 +125,14 @@ def cifti_report(
     cifti_label = nib.load(str(out_prefix) + '.threshold.label.dscalar.nii')
     cifti_label_data = cifti_label.get_fdata()
     atlas_file = nib.load(atlas_path)
+
+    if not brain_models_are_equal(cifti_infile.header, atlas_file.header):
+        raise ValueError("barin models of cifti file and atlas file are not equal")
+
     atlas_data = atlas_file.get_fdata()[0]
     atlas_header = atlas_file.header
     atlas_map = {k: v[0] for k, v in atlas_header.get_axis(0).label[0].items()}
-    brain_models = [bm for bm in atlas_header.get_index_map(1).brain_models]
+    brain_models = list(atlas_header.get_index_map(1).brain_models)
 
     surf_lh_vert = surf_lh.darrays[0].data
     surf_rh_vert = surf_rh.darrays[0].data
