@@ -102,13 +102,11 @@ def setup_volume_combat(subparsers):
 def setup_metric_report(subparsers):
     parser = subparsers.add_parser("metric-report", help="""
     metric report, example:
-    python hky.py metric-report a_lh.func.gii -o a_lh -t 5 \
-        -s data/tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-L_midthickness.area.shape.gii \
-        -a data/Desikan.32k.L.label.gii
+    python hky.py metric-report a_lh.func.gii -o a_lh -t 5 -a data/Desikan.32k.L.label.gii \
+        -s data/tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-L_midthickness.area.shape.gii
     
-    python hky.py metric-report a_rh.func.gii -o a_rh -t 5 \
-        -s data/tpl-fsLR_den-32k_hemi-R_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-R_midthickness.area.shape.gii \
-        -a data/Desikan.32k.R.label.gii
+    python hky.py metric-report a_rh.func.gii -o a_rh -t 5 -a data/Desikan.32k.R.label.gii \
+        -s data/tpl-fsLR_den-32k_hemi-R_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-R_midthickness.area.shape.gii
     """)
     parser.set_defaults(func=arg_extractor(metric_report))
     parser.add_argument('metric_path', help='input a metric file for report')
@@ -133,7 +131,7 @@ def setup_cifti_report(subparsers):
     parser = subparsers.add_parser("cifti-report", help="""
     cifti report, example: find value > 5, area > 0, surface cluster. add -less-than flag if you want less than a value.
     python hky.py cifti-report a.dscalar.nii 5 0 5 0 data/Desikan.32k.dlabel.nii out_prefix \
-        -l data/tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-L_midthickness.area.shape.gii 
+        -l data/tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-L_midthickness.area.shape.gii \
         -r data/tpl-fsLR_den-32k_hemi-R_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-R_midthickness.area.shape.gii
     """)
     parser.set_defaults(func=arg_extractor(cifti_report))
