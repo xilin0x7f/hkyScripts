@@ -99,9 +99,17 @@ def setup_volume_combat(subparsers):
     parser.add_argument('-n', '--neb', help='-n not use eb; else use eb', action='store_false', dest='eb')
     parser.add_argument('-f', '--factor', default=0, help='factor, set 0 to auto estimate', type=int)
 
-# def metric_report(metric_path, surface_path, atlas_path, threshold, minimum_area, output_prefix, less_than=False):
 def setup_metric_report(subparsers):
-    parser = subparsers.add_parser("metric-report", help="metric report")
+    parser = subparsers.add_parser("metric-report", help="""
+    metric report, example:
+    python hky.py metric-report a_lh.func.gii -o a_lh -t 5 \
+        -s data/tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-L_midthickness.area.shape.gii \
+        -a data/Desikan.32k.L.label.gii
+    
+    python hky.py metric-report a_rh.func.gii -o a_rh -t 5 \
+        -s data/tpl-fsLR_den-32k_hemi-R_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-R_midthickness.area.shape.gii \
+        -a data/Desikan.32k.R.label.gii
+    """)
     parser.set_defaults(func=arg_extractor(metric_report))
     parser.add_argument('metric_path', help='input a metric file for report')
     parser.add_argument('-s', '--surface', required=True, nargs='+',
@@ -120,10 +128,14 @@ def setup_get_motion(subparsers):
     parser.set_defaults(func=arg_extractor(get_motion))
     parser.add_argument("output_path", help="output path")
     parser.add_argument("files_path", nargs="+", help="motion files path")
-# cifti_path, surface_value_threshold, surface_minimum_area, volume_value_threshold, volume_minimum_size, atlas_path,
-# left_surface_path, right_surface_path, out_prefix, less_than=False, direction='COLUMN'
+
 def setup_cifti_report(subparsers):
-    parser = subparsers.add_parser("cifti-report", help="cifti report")
+    parser = subparsers.add_parser("cifti-report", help="""
+    cifti report, example: find value > 5, area > 0, surface cluster. add -less-than flag if you want less than a value.
+    python hky.py cifti-report a.dscalar.nii 5 0 5 0 data/Desikan.32k.dlabel.nii out_prefix \
+        -l data/tpl-fsLR_den-32k_hemi-L_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-L_midthickness.area.shape.gii 
+        -r data/tpl-fsLR_den-32k_hemi-R_midthickness.surf.gii data/tpl-fsLR_den-32k_hemi-R_midthickness.area.shape.gii
+    """)
     parser.set_defaults(func=arg_extractor(cifti_report))
     parser.add_argument("cifti_path", help="cifti path")
     parser.add_argument("surface_value_threshold", help="surface value threshold")
@@ -137,9 +149,12 @@ def setup_cifti_report(subparsers):
     parser.add_argument('-less-than', action='store_true')
     parser.add_argument('-d', '--direction', default='COLUMN', help='COLUMN or ROW')
 
-# cifti_path, out_path, mask_path=None, weight_path=None
 def setup_cifti_surface_zscore(subparsers):
-    parser = subparsers.add_parser("cifti-surface-zscore", help="cifti surface zscore")
+    parser = subparsers.add_parser("cifti-surface-zscore", help="""
+    cifti surface zscore, example:
+    python hky.py cifti-surface-zscore a.dscalar.nii a.zscore.dscalar.nii -m data/tpl-fsLR_den-32k_mask.dscalar.nii \
+        -w data/tpl-fsLR_den-32k_midthickness.area.dscalar.nii
+    """)
     parser.set_defaults(func=arg_extractor(cifti_surface_zscore))
     parser.add_argument("cifti_path", help="cifti path")
     parser.add_argument("out_path", help="out path")
