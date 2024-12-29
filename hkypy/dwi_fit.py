@@ -27,12 +27,10 @@ def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki_", f
     img = nib.load(dwi_path)
     data = img.get_fdata()
     affine = img.affine
-
     mask_img = nib.load(mask_path)
     mask = mask_img.get_fdata().astype(bool)
+    gtab = gradient_table(*read_bvals_bvecs(bval_path, bvec_path))
 
-    bvals, bvecs = read_bvals_bvecs(bval_path, bvec_path)
-    gtab = gradient_table(bvals, bvecs)
     if fwhm > 0:
         data_smooth = np.zeros(data.shape)
         for v in range(data.shape[-1]):
@@ -43,14 +41,8 @@ def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki_", f
     dki_model = DiffusionKurtosisModel(gtab)
     dki_fit = dki_model.fit(data_smooth, mask=mask)
 
-    fa = dki_fit.fa
-    md = dki_fit.md
-    mk = dki_fit.mk
-    ak = dki_fit.ak
-    rk = dki_fit.rk
-
-    nib.save(nib.Nifti1Image(fa, affine), out_prefix+"_FA.nii.gz")
-    nib.save(nib.Nifti1Image(md, affine), out_prefix+"_MD.nii.gz")
-    nib.save(nib.Nifti1Image(mk, affine), out_prefix+"_MK.nii.gz")
-    nib.save(nib.Nifti1Image(ak, affine), out_prefix+"_AK.nii.gz")
-    nib.save(nib.Nifti1Image(rk, affine), out_prefix+"_RK.nii.gz")
+    nib.save(nib.Nifti1Image(dki_fit.fa, affine), out_prefix+"_FA.nii.gz")
+    nib.save(nib.Nifti1Image(dki_fit.md, affine), out_prefix+"_MD.nii.gz")
+    nib.save(nib.Nifti1Image(dki_fit.mk, affine), out_prefix+"_MK.nii.gz")
+    nib.save(nib.Nifti1Image(dki_fit.ak, affine), out_prefix+"_AK.nii.gz")
+    nib.save(nib.Nifti1Image(dki_fit.rk, affine), out_prefix+"_RK.nii.gz")
