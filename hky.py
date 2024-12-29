@@ -4,7 +4,7 @@ import argparse
 import inspect
 
 from hkypy.cifti_func import cifti_array2map
-from hkypy.dwi_fit import dmri_amico_fit
+from hkypy.dwi_fit import dmri_amico_fit, dmri_dki_fit
 from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import volume_fpca, volume_4d2rgb, volume_extract, volume_restore
 from hkypy.combat import text_combat, volume_combat
@@ -158,6 +158,16 @@ def setup_cifti_surface_zscore(subparsers):
     parser.add_argument("out_path", help="out path")
     parser.add_argument("-m", "--mask_path", help="mask path")
     parser.add_argument("-w", "--weight_path", help="weight path")
+
+def setup_dmri_dki_fit(subparsers):
+    parser = subparsers.add_parser("dmri-dki-fit", help='dmri dki fit')
+    parser.set_defaults(func=arg_extractor(dmri_dki_fit))
+    parser.add_argument("dwi_path", help="dmri path")
+    parser.add_argument('bvec_path', help='bvec path')
+    parser.add_argument('bval_path', help='bval path')
+    parser.add_argument("mask_path", help="mask path")
+    parser.add_argument("out_prefix", default='dki_', help="out prefix")
+    parser.add_argument('-f', '--fwhm', default=1.25, type=float, help='fwhm for smooth, set 0 to no smooth')
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")

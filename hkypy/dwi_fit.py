@@ -1,4 +1,6 @@
 # Author: 赩林, xilin0x7f@163.com
+import numpy as np
+import nibabel as nib
 
 def dmri_amico_fit(dwi_path, bvec_path, bval_path, mask_path, model_name="NODDI"):
     import amico
@@ -15,3 +17,40 @@ def dmri_amico_fit(dwi_path, bvec_path, bval_path, mask_path, model_name="NODDI"
     ae.load_kernels()
     ae.fit()
     ae.save_results()
+
+def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki_", fwhm=1.25):
+    from dipy.core.gradients import gradient_table
+    from dipy.io.gradients import read_bvals_bvecs
+    from dipy.reconst.dki import DiffusionKurtosisModel
+    from scipy.ndimage import gaussian_filter
+
+    img = nib.load(dwi_path)
+    data = img.get_fdata()
+    affine = img.affine
+
+    mask_img = nib.load(mask_path)
+    mask = mask_img.get_fdata().astype(bool)
+
+    bvals, bvecs = read_bvals_bvecs(bval_path, bvec_path)
+    gtab = gradient_table(bvals, bvecs)
+    if fwhm > 0:
+        data_smooth = np.zeros(data.shape)
+        for v in range(data.shape[-1]):
+            data_smooth[..., v] = gaussian_filter(data[..., v], sigma=fwhm/np.sqrt(8 * np.log(2)))
+    else:
+        data_smooth = data
+
+    dki_model = DiffusionKurtosisModel(gtab)
+    dki_fit = dki_model.fit(data_smooth, mask=mask)
+
+    fa = dki_fit.fa
+    md = dki_fit.md
+    mk = dki_fit.mk
+    ak = dki_fit.ak
+    rk = dki_fit.rk
+
+    nib.save(nib.Nifti1Image(fa, affine), out_prefix+"_FA.nii.gz")
+    nib.save(nib.Nifti1Image(md, affine), out_prefix+"_MD.nii.gz")
+    nib.save(nib.Nifti1Image(mk, affine), out_prefix+"_MK.nii.gz")
+    nib.save(nib.Nifti1Image(ak, affine), out_prefix+"_AK.nii.gz")
+    nib.save(nib.Nifti1Image(rk, affine), out_prefix+"_RK.nii.gz")
