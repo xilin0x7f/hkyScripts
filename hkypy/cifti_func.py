@@ -121,18 +121,21 @@ def cifti_report(
         area_rh = nib.load(right_surface_path[1]).darrays[0].data
 
     cifti_infile = nib.load(cifti_path)
+    cifti_infile_brain_models = list(cifti_infile.header.matrix.get_index_map(1).brain_models)
+
     cifti_infile_data = cifti_infile.get_fdata()
     cifti_label = nib.load(str(out_prefix) + '.threshold.label.dscalar.nii')
     cifti_label_data = cifti_label.get_fdata()
     atlas_file = nib.load(atlas_path)
 
-    if not brain_models_are_equal(cifti_infile.header, atlas_file.header):
-        raise ValueError("barin models of cifti file and atlas file are not equal")
+    atlas_file_brain_models = list(atlas_file.header.matrix.get_index_map(1).brain_models)
+
+    # if not brain_models_are_equal(cifti_infile.header, atlas_file.header):
+    #     raise ValueError("barin models of cifti file and atlas file are not equal")
 
     atlas_data = atlas_file.get_fdata()[0]
     atlas_header = atlas_file.header
     atlas_map = {k: v[0] for k, v in atlas_header.get_axis(0).label[0].items()}
-    brain_models = list(atlas_header.get_index_map(1).brain_models)
 
     surf_lh_vert = surf_lh.darrays[0].data
     surf_rh_vert = surf_rh.darrays[0].data
@@ -144,10 +147,29 @@ def cifti_report(
     elif len(cifti_infile_data) < len(cifti_label_data):
         ValueError("cifti file time size is less than label file")
 
+    cifti_infile_lh, cifti_infile_rh, _, _, cifti_infile_volume, cifti_infile_volume_mat = cifti_separate(cifti_infile)
+    cifti_label_lh, cifti_label_rh, _, _, cifti_label_volume, cifti_label_volume_mat = cifti_separate(cifti_label)
+    atlas_file_lh, atlas_file_rh, _, _, atlas_file_volume, atlas_file_volume_mat = cifti_separate(atlas_file)
+    if cifti_infile_lh.shape[1] != atlas_file_lh.shape[1]:
+        raise ValueError("left surface and atlas file are not equal")
+    if cifti_infile_rh.shape[1] != atlas_file_rh.shape[1]:
+        raise ValueError("right surface and atlas file are not equal")
+
+    volume_report = True
+    if cifti_infile_volume is None:
+        volume_report = False
+    if atlas_file_volume is None:
+        volume_report = False
+
+    if volume_report and not (
+        np.all(cifti_infile_volume.shape[:3] == atlas_file_volume.shape[:3]) and
+        np.all(cifti_infile_volume_mat == cifti_infile_volume_mat)
+            ):
+        raise ValueError('volume matrix is not equal between cifti file and atlas file')
+
     for darray_idx in range(len(cifti_infile_data)):
         cluster_all = []
         cluster_size_info_all = []
-        cifti_infile_data_c = cifti_infile_data[darray_idx]
         if len_infile_label_equal:
             cifti_label_data_c = cifti_label_data[darray_idx]
         else:
@@ -158,15 +180,15 @@ def cifti_report(
 
             if less_than:
                 peak_idx = np.array(range(len(cifti_label_data_c)))[cifti_label_data_c == (label_idx + 1)][np.argmin(
-                    cifti_infile_data_c[cifti_label_data_c == (label_idx + 1)])]
+                    cifti_infile_data[darray_idx][cifti_label_data_c == (label_idx + 1)])]
 
             else:
                 peak_idx = np.array(range(len(cifti_label_data_c)))[cifti_label_data_c == (label_idx + 1)][np.argmax(
-                    cifti_infile_data_c[cifti_label_data_c == (label_idx + 1)])]
+                    cifti_infile_data[darray_idx][cifti_label_data_c == (label_idx + 1)])]
 
-            peak_value = cifti_infile_data_c[peak_idx]
+            peak_value = cifti_infile_data[darray_idx][peak_idx]
             peak_bm = None
-            for bm in brain_models:
+            for bm in cifti_infile_brain_models:
                 start = bm.index_offset
                 end = start + bm.index_count
                 if start <= peak_idx < end:
@@ -174,50 +196,77 @@ def cifti_report(
 
             if peak_bm.brain_structure == 'CIFTI_STRUCTURE_CORTEX_LEFT':
                 peak_coord = surf_lh_vert[peak_bm._vertex_indices._indices][peak_idx - peak_bm.index_offset]
+                peak_region = atlas_map[
+                    atlas_file_lh[0][peak_bm._vertex_indices._indices][peak_idx - peak_bm.index_offset]
+                ]
                 cluster_size = np.sum(area_lh[peak_bm._vertex_indices._indices][
                     (cifti_label_data_c == (label_idx + 1))
                     [peak_bm.index_offset:peak_bm.index_offset + peak_bm.index_count]
                                       ])
-
-                for inter_label_idx in np.unique(atlas_data[cifti_label_data_c == (label_idx + 1)]):
+                for inter_label_idx in np.unique(
+                    atlas_file_lh[0][
+                        (cifti_label_lh[darray_idx] if len_infile_label_equal else cifti_label_lh[0]) == (label_idx + 1)
+                    ]
+                ):
                     cluster_size_info_all.append([
                         label_idx + 1, atlas_map[inter_label_idx],
-                        np.sum(area_lh[peak_bm._vertex_indices._indices][
-                                   ((cifti_label_data_c == (label_idx + 1)) & (atlas_data == inter_label_idx))
-                                   [peak_bm.index_offset:peak_bm.index_offset + peak_bm.index_count]
+                        np.sum(area_lh[
+                                   ((cifti_label_lh[darray_idx] if len_infile_label_equal else cifti_label_lh[0])
+                                    == (label_idx + 1)) & (atlas_file_lh[0] == inter_label_idx)
                                ]),
                         ])
             elif peak_bm.brain_structure == 'CIFTI_STRUCTURE_CORTEX_RIGHT':
                 peak_coord = surf_rh_vert[peak_bm._vertex_indices._indices][peak_idx - peak_bm.index_offset]
+                peak_region = atlas_map[
+                    atlas_file_rh[0][peak_bm._vertex_indices._indices][peak_idx - peak_bm.index_offset]
+                ]
                 cluster_size = np.sum(area_rh[peak_bm._vertex_indices._indices][
                                           (cifti_label_data_c == (label_idx + 1))
                                           [peak_bm.index_offset:peak_bm.index_offset + peak_bm.index_count]
                                       ])
-
-                for inter_label_idx in np.unique(atlas_data[cifti_label_data_c == (label_idx + 1)]):
+                for inter_label_idx in np.unique(
+                    atlas_file_rh[0][
+                        (cifti_label_rh[darray_idx] if len_infile_label_equal else cifti_label_rh[0]) == (label_idx + 1)
+                    ]
+                ):
                     cluster_size_info_all.append([
                         label_idx + 1, atlas_map[inter_label_idx],
-                        np.sum(area_rh[peak_bm._vertex_indices._indices][
-                                   ((cifti_label_data_c == (label_idx + 1)) & (atlas_data == inter_label_idx))
-                                   [peak_bm.index_offset:peak_bm.index_offset + peak_bm.index_count]
-                               ]),
+                        np.sum(area_rh[
+                                   ((cifti_label_rh[darray_idx] if len_infile_label_equal else cifti_label_rh[0])
+                                    == (label_idx + 1)) & (atlas_file_rh[0] == inter_label_idx)
+                                   ]),
                         ])
             elif peak_bm.model_type == 'CIFTI_MODEL_TYPE_VOXELS':
                 peak_coord = (
-                                 atlas_header.get_axis(1)._affine @
-                                 np.append(atlas_header.get_axis(1).voxel[peak_idx], 1)
+                                 cifti_infile.header.get_axis(1)._affine @
+                                 np.append(cifti_infile.header.get_axis(1).voxel[peak_idx], 1)
                              )[:3]
                 cluster_size = np.sum(cifti_label_data_c == (label_idx + 1))
-
-                for inter_label_idx in np.unique(atlas_data[cifti_label_data_c == (label_idx + 1)]):
-                    cluster_size_info_all.append([
-                        label_idx + 1, atlas_map[inter_label_idx],
-                        np.sum((cifti_label_data_c == (label_idx + 1)) & (atlas_data == inter_label_idx)),
-                        ])
+                if volume_report:
+                    peak_region = atlas_map[
+                        atlas_file_volume[*peak_bm._voxel_indices_ijk._indices[peak_idx - peak_bm.index_offset], 0]
+                    ]
+                    for inter_label_idx in np.unique(
+                        atlas_file_volume[
+                            (
+                                cifti_label_volume[..., darray_idx] if len_infile_label_equal else
+                                cifti_label_volume[..., 0]
+                            ) ==
+                            (label_idx + 1), 0]
+                    ):
+                        cluster_size_info_all.append([
+                            label_idx + 1, atlas_map[inter_label_idx],
+                            np.sum(((
+                                       cifti_label_volume[..., darray_idx] if len_infile_label_equal else
+                                       cifti_label_volume[..., 0]
+                                   ) ==
+                                   (label_idx + 1)) &
+                                   (atlas_file_volume[..., 0] == inter_label_idx)),
+                            ])
+                else:
+                    peak_region = None
             else:
                 raise ValueError(f"peak_brain_structure is not support, not CORTEX_LEFT or CORTEX_RIGHT or volume")
-
-            peak_region = atlas_map[atlas_data[peak_idx]]
 
             cluster_all.append([label_idx+1, *peak_coord, peak_value, cluster_size, peak_region])
 
@@ -264,23 +313,33 @@ def cifti_separate(cifti_file):
 
     return cortex_left_data, cortex_right_data, cortex_left_indices, cortex_right_indices, volume_data, volume_mat
 
-def cifti_surface_zscore(cifti_file, mask_left=None, mask_right=None, weight_lh=None, weight_rh=None):
+def cifti_surface_zscore(cifti_path, out_path, mask_path=None, weight_path=None):
+    cifti_file = nib.load(cifti_path)
+    mask_file = nib.load(mask_path) if mask_path is not None else None
+    weight_file = nib.load(weight_path) if weight_path is not None else None
     cortex_left_data, cortex_right_data, cortex_left_indices, cortex_right_indices = cifti_separate(cifti_file)[:4]
-    if mask_left is None:
+    if mask_file is not None:
+        mask_left, mask_right = cifti_separate(mask_file)[0:2]
+    else:
         mask_left = np.zeros(cortex_left_data.shape[1])
         mask_left[cortex_left_indices] = 1
-
-    if mask_right is None:
         mask_right = np.zeros(cortex_right_data.shape[1])
         mask_right[cortex_right_indices] = 1
 
     mask_left, mask_right = mask_left.flatten(), mask_right.flatten()
+
+    if weight_file is not None:
+        weight_lh, weight_rh = cifti_separate(weight_file)[0:2]
+        weight_lh, weight_rh = weight_lh.flatten(), weight_rh.flatten()
+    else:
+        weight_lh, weight_rh = np.ones(cortex_left_data.shape[1]), np.ones(cortex_right_data.shape[1])
+
     cortex_all = np.hstack([cortex_left_data, cortex_right_data])
     mask_all = np.hstack([mask_left, mask_right])
     cortex_masked = cortex_all[:, mask_all > 0]
     if weight_lh is not None and weight_rh is not None:
         weight_all = np.hstack([weight_lh, weight_rh])
-        weight_masked = weight_all[:, mask_all > 0]
+        weight_masked = weight_all[mask_all > 0]
         mean_value = np.average(cortex_masked, weights=weight_masked, axis=1)[:, np.newaxis]
         std_value = np.sqrt(np.average((cortex_masked-mean_value)**2, weights=weight_masked, axis=1))[:, np.newaxis]
         cortex_masked_zscore = (cortex_masked - mean_value) / std_value
@@ -300,8 +359,8 @@ def cifti_surface_zscore(cifti_file, mask_left=None, mask_right=None, weight_lh=
     ax0 = nib.cifti2.cifti2_axes.ScalarAxis(name=[f"#{i+1}" for i in range(cortex_all.shape[0])])
     # ax1 = cifti_file.header.get_axis(1)
     ax1 = nib.cifti2.cifti2_axes.BrainModelAxis(
-        name=np.array(['CIFTI_STRUCTURE_CORTEX_LEFT' for i in range(np.sum(mask_left > 0))] +
-                      ['CIFTI_STRUCTURE_CORTEX_RIGHT' for i in range(np.sum(mask_right > 0))]),
+        name=np.array(['CIFTI_STRUCTURE_CORTEX_LEFT' for _ in range(np.sum(mask_left > 0))] +
+                      ['CIFTI_STRUCTURE_CORTEX_RIGHT' for _ in range(np.sum(mask_right > 0))]),
         nvertices={
             "CIFTI_STRUCTURE_CORTEX_LEFT": cortex_left_data.shape[1],
             "CIFTI_STRUCTURE_CORTEX_RIGHT": cortex_right_data.shape[1]},
@@ -311,4 +370,4 @@ def cifti_surface_zscore(cifti_file, mask_left=None, mask_right=None, weight_lh=
     img = nib.Cifti2Image(cortex_masked_zscore, header)
     img.nifti_header.set_intent('ConnDenseScalar')
 
-    return img
+    nib.save(img, out_path)

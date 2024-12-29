@@ -10,7 +10,7 @@ from hkypy.volume_func import volume_fpca, volume_4d2rgb, volume_extract, volume
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report
 from hkypy.utils import get_motion
-from hkypy.cifti_func import cifti_report
+from hkypy.cifti_func import cifti_report, cifti_surface_zscore
 
 def arg_extractor(func):
     def wrapper(args):
@@ -136,6 +136,15 @@ def setup_cifti_report(subparsers):
     parser.add_argument("-r", "--right_surface_path", nargs="+", help="right surface path", required=True)
     parser.add_argument('-less-than', action='store_true')
     parser.add_argument('-d', '--direction', default='COLUMN', help='COLUMN or ROW')
+
+# cifti_path, out_path, mask_path=None, weight_path=None
+def setup_cifti_surface_zscore(subparsers):
+    parser = subparsers.add_parser("cifti-surface-zscore", help="cifti surface zscore")
+    parser.set_defaults(func=arg_extractor(cifti_surface_zscore))
+    parser.add_argument("cifti_path", help="cifti path")
+    parser.add_argument("out_path", help="out path")
+    parser.add_argument("-m", "--mask_path", help="mask path")
+    parser.add_argument("-w", "--weight_path", help="weight path")
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")
