@@ -43,6 +43,8 @@ def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki_", f
 
     nib.save(nib.Nifti1Image(dki_fit.fa, affine), out_prefix+"_FA.nii.gz")
     nib.save(nib.Nifti1Image(dki_fit.md, affine), out_prefix+"_MD.nii.gz")
+    nib.save(nib.Nifti1Image(dki_fit.ad, affine), out_prefix+"_AD.nii.gz")
+    nib.save(nib.Nifti1Image(dki_fit.rd, affine), out_prefix+"_RD.nii.gz")
     nib.save(nib.Nifti1Image(dki_fit.mk, affine), out_prefix+"_MK.nii.gz")
     nib.save(nib.Nifti1Image(dki_fit.ak, affine), out_prefix+"_AK.nii.gz")
     nib.save(nib.Nifti1Image(dki_fit.rk, affine), out_prefix+"_RK.nii.gz")
