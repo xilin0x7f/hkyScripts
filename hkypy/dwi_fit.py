@@ -18,7 +18,9 @@ def dmri_amico_fit(dwi_path, bvec_path, bval_path, mask_path, model_name="NODDI"
     ae.fit()
     ae.save_results()
 
-def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki", fwhm=1.25, method='OLS'):
+def dmri_dki_fit(
+    dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki", fwhm=1.25, method='OLS', min_kurtosis=0, max_kurtosis=3
+):
     from dipy.core.gradients import gradient_table
     from dipy.io.gradients import read_bvals_bvecs
     from dipy.reconst.dki import DiffusionKurtosisModel
@@ -41,12 +43,14 @@ def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki", fw
 
     dki_model = DiffusionKurtosisModel(gtab, fit_method=method)
     dki_fit = dki_model.fit(data_smooth, mask=mask)
-    for index in ['fa', 'md', 'ad', 'rd', 'mk', 'ak', 'rk']:
+    for index in ['fa', 'md', 'ad', 'rd', 'kfa', 'mkt', 'mk', 'ak', 'rk']:
         index_data = getattr(dki_fit, index)
-        index_data = np.array([
-            [
-                [0.0 if callable(x) or x is None else x for x in arr1] for arr1 in arr2
-            ]
-            for arr2 in index_data
-        ])
+        if index in ['mkt', 'mk', 'ak', 'rk']:
+            index_data = index_data(min_kurtosis=0, max_kurtosis=3)
+        # index_data = np.array([
+        #     [
+        #         [0.0 if callable(x) or x is None else x for x in arr1] for arr1 in arr2
+        #     ]
+        #     for arr2 in index_data
+        # ])
         nib.save(nib.Nifti1Image(index_data, affine), out_prefix + "_" + index.upper() + ".nii.gz")
