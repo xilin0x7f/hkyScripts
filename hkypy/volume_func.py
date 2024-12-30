@@ -98,3 +98,16 @@ def volume_restore(data, mask_path, out_path):
 
     img_header = nib.Nifti1Image(img_data, header=mask_img.header, affine=mask_img.header.get_best_affine())
     nib.save(img_header, out_path)
+
+def volume_create_sphere(volume_path, out_path, x, y, z, r):
+    from scipy.spatial.distance import cdist
+
+    nii_file = nib.load(volume_path)
+    data = nii_file.get_fdata()
+    affine = nii_file.affine
+    coord = np.array((x, y, z)).reshape(1, -1)
+    mask = np.zeros(data.shape[:3]).ravel()
+    i, j, k = np.indices(data.shape[:3])
+    coords = (affine @ np.vstack((i.ravel(), j.ravel(), k.ravel(), np.ones(mask.size))))[:3, :].T
+    mask[cdist(coord, coords, metric='euclidean')[0] < r] = 1
+    nib.save(nib.Nifti1Image(mask.reshape(data.shape[:3]), affine), out_path)

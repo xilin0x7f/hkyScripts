@@ -6,7 +6,7 @@ import inspect
 from hkypy.cifti_func import cifti_array2map
 from hkypy.dwi_fit import dmri_amico_fit, dmri_dki_fit
 from hkypy.surface_func import surface_get_parc_coord
-from hkypy.volume_func import volume_fpca, volume_4d2rgb, volume_extract, volume_restore
+from hkypy.volume_func import volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report
 from hkypy.utils import get_motion
@@ -175,6 +175,16 @@ def setup_dmri_dki_fit(subparsers):
     """)
     parser.add_argument('--min-kurtosis', default=0.0, type=float, help='minimum kurtosis, default 0.0')
     parser.add_argument('--max-kurtosis', default=3.0, type=float, help='maximum kurtosis, default 3.0')
+
+def setup_volume_create_sphere(subparsers):
+    parser = subparsers.add_parser('volume-create-sphere', 'create volume sphere mask by mm coord')
+    parser.set_defaults(func=arg_extractor(volume_create_sphere))
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("out_path", help="out path")
+    parser.add_argument("x", help='x mm coord')
+    parser.add_argument("y", help='y mm coord')
+    parser.add_argument("z", help='z mm coord')
+    parser.add_argument("r", help="radius")
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")
