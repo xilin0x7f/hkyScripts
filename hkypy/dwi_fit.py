@@ -18,7 +18,7 @@ def dmri_amico_fit(dwi_path, bvec_path, bval_path, mask_path, model_name="NODDI"
     ae.fit()
     ae.save_results()
 
-def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki_", fwhm=1.25):
+def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki", fwhm=1.25, method='CWLS'):
     from dipy.core.gradients import gradient_table
     from dipy.io.gradients import read_bvals_bvecs
     from dipy.reconst.dki import DiffusionKurtosisModel
@@ -29,22 +29,24 @@ def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki_", f
     affine = img.affine
     mask_img = nib.load(mask_path)
     mask = mask_img.get_fdata().astype(bool)
-    gtab = gradient_table(*read_bvals_bvecs(bval_path, bvec_path))
+    bvals, bvecs = read_bvals_bvecs(bval_path, bvec_path)
+    gtab = gradient_table(bvals, bvecs=bvecs)
 
     if fwhm > 0:
         data_smooth = np.zeros(data.shape)
         for v in range(data.shape[-1]):
-            data_smooth[..., v] = gaussian_filter(data[..., v], sigma=fwhm/np.sqrt(8 * np.log(2)))
+            data_smooth[mask, v] = gaussian_filter(data[mask, v], sigma=fwhm/np.sqrt(8 * np.log(2)))
     else:
         data_smooth = data
 
-    dki_model = DiffusionKurtosisModel(gtab)
+    dki_model = DiffusionKurtosisModel(gtab, fit_method=method)
     dki_fit = dki_model.fit(data_smooth, mask=mask)
-
-    nib.save(nib.Nifti1Image(dki_fit.fa, affine), out_prefix+"_FA.nii.gz")
-    nib.save(nib.Nifti1Image(dki_fit.md, affine), out_prefix+"_MD.nii.gz")
-    nib.save(nib.Nifti1Image(dki_fit.ad, affine), out_prefix+"_AD.nii.gz")
-    nib.save(nib.Nifti1Image(dki_fit.rd, affine), out_prefix+"_RD.nii.gz")
-    nib.save(nib.Nifti1Image(dki_fit.mk, affine), out_prefix+"_MK.nii.gz")
-    nib.save(nib.Nifti1Image(dki_fit.ak, affine), out_prefix+"_AK.nii.gz")
-    nib.save(nib.Nifti1Image(dki_fit.rk, affine), out_prefix+"_RK.nii.gz")
+    for index in ['fa', 'md', 'ad', 'rd', 'mk', 'ak', 'rk']:
+        index_data = getattr(dki_fit, index)
+        index_data = np.array([
+            [
+                [0.0 if callable(x) or x is None else x for x in arr1] for arr1 in arr2
+            ]
+            for arr2 in index_data
+        ])
+        nib.save(nib.Nifti1Image(index_data, affine), out_prefix + "_" + index.upper() + ".nii.gz")

@@ -59,7 +59,7 @@ def setup_cifti_array2map(subparsers):
     parser.add_argument('out_path', help='output dscalar file')
     parser.add_argument('-d', '--delimiter', default=' ', help='delimiter for txt file')
     parser.add_argument('-t', '--transpose', action='store_true', help='transpose data')
-    parser.add_argument('-s', '--skiprows', type=int, default=0, help='skip first rows')
+    parser.add_argument('-s', '--skiprows', type=int, default=0, help='skip first rows, default is 0')
 
 def setup_volume_4d2rgb(subparsers):
     parser = subparsers.add_parser("volume-4d2rgb", help="convert 4d nifti to rgb nifti")
@@ -84,7 +84,7 @@ def setup_text_combat(subparsers):
     parser.add_argument('-con', '--con', default=None, help='continuous')
     parser.add_argument('-cat', '--cat', default=None, help='categorical')
     parser.add_argument('-n', '--neb', help='-n not use eb; else use eb', action='store_false', dest='eb')
-    parser.add_argument('-f', '--factor', default=0, help='factor, set 0 to auto estimate', type=int)
+    parser.add_argument('-f', '--factor', default=0, help='factor, set 0 to auto estimate, default is 0', type=int)
 
 def setup_volume_combat(subparsers):
     parser = subparsers.add_parser("volume-combat", help="volume combat")
@@ -97,7 +97,7 @@ def setup_volume_combat(subparsers):
     parser.add_argument('-con', '--con', default=None, help='continuous')
     parser.add_argument('-cat', '--cat', default=None, help='categorical')
     parser.add_argument('-n', '--neb', help='-n not use eb; else use eb', action='store_false', dest='eb')
-    parser.add_argument('-f', '--factor', default=0, help='factor, set 0 to auto estimate', type=int)
+    parser.add_argument('-f', '--factor', default=0, help='factor, set 0 (default) to auto estimate', type=int)
 
 def setup_metric_report(subparsers):
     parser = subparsers.add_parser("metric-report", help="""
@@ -115,8 +115,9 @@ def setup_metric_report(subparsers):
     parser.add_argument('-a', '--atlas', required=True, help='input a atlas file for report brain regions',
                         dest='atlas_path')
     parser.add_argument('-o', '--out_prefix', required=True, help='out prefix')
-    parser.add_argument('-t', '--threshold', required=False, default=1, help='value-threshold for wb_command')
-    parser.add_argument('--minimum-area', required=False, default=0, help='minimum area for wb_command')
+    parser.add_argument('-t', '--threshold', required=False, default=1,
+                        help='value-threshold for wb_command, default 1')
+    parser.add_argument('--minimum-area', required=False, default=0, help='minimum area for wb_command, default 0')
     parser.add_argument('-less-than', action='store_true')
 
 def setup_get_motion(subparsers):
@@ -145,7 +146,7 @@ def setup_cifti_report(subparsers):
     parser.add_argument("-l", "--left_surface_path", nargs="+", help="left surface path", required=True)
     parser.add_argument("-r", "--right_surface_path", nargs="+", help="right surface path", required=True)
     parser.add_argument('-less-than', action='store_true')
-    parser.add_argument('-d', '--direction', default='COLUMN', help='COLUMN or ROW')
+    parser.add_argument('-d', '--direction', default='COLUMN', help='COLUMN or ROW, default COLUMN')
 
 def setup_cifti_surface_zscore(subparsers):
     parser = subparsers.add_parser("cifti-surface-zscore", help="""
@@ -166,8 +167,12 @@ def setup_dmri_dki_fit(subparsers):
     parser.add_argument('bvec_path', help='bvec path')
     parser.add_argument('bval_path', help='bval path')
     parser.add_argument("mask_path", help="mask path")
-    parser.add_argument("out_prefix", default='dki_', help="out prefix")
-    parser.add_argument('-f', '--fwhm', default=1.25, type=float, help='fwhm for smooth, set 0 to no smooth')
+    parser.add_argument("out_prefix", default='dki_', help="out prefix, default dki")
+    parser.add_argument('-f', '--fwhm', default=1.25, type=float,
+                        help='fwhm for smooth, set 0 to no smooth, default 1.25')
+    parser.add_argument('-m', '--method', default='CWLS', help="""
+    dki fit method, default CWLS, support  CWLS, WLS, OLS, CLS
+    """)
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")
