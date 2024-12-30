@@ -46,7 +46,7 @@ def dmri_dki_fit(
     for index in ['fa', 'md', 'ad', 'rd', 'kfa', 'mkt', 'mk', 'ak', 'rk']:
         index_data = getattr(dki_fit, index)
         if index in ['mkt', 'mk', 'ak', 'rk']:
-            index_data = index_data(min_kurtosis=0, max_kurtosis=3)
+            index_data = index_data(min_kurtosis=min_kurtosis, max_kurtosis=max_kurtosis)
         # index_data = np.array([
         #     [
         #         [0.0 if callable(x) or x is None else x for x in arr1] for arr1 in arr2

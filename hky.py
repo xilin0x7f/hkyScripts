@@ -173,8 +173,8 @@ def setup_dmri_dki_fit(subparsers):
     parser.add_argument('-m', '--method', default='OLS', help="""
     dki fit method, default OLS, support OLS, ULLS, WLS, WLLS, UWLLS, CLS, CWLS
     """)
-    parser.add_argument('--min_kurtosis', default=0.0, type=float, help='minimum kurtosis, default 0.0')
-    parser.add_argument('--max_kurtosis', default=3.0, type=float, help='maximum kurtosis, default 3.0')
+    parser.add_argument('--min-kurtosis', default=0.0, type=float, help='minimum kurtosis, default 0.0')
+    parser.add_argument('--max-kurtosis', default=3.0, type=float, help='maximum kurtosis, default 3.0')
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")
