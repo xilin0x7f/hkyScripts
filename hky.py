@@ -170,8 +170,8 @@ def setup_dmri_dki_fit(subparsers):
     parser.add_argument("out_prefix", default='dki_', help="out prefix, default dki")
     parser.add_argument('-f', '--fwhm', default=1.25, type=float,
                         help='fwhm for smooth, set 0 to no smooth, default 1.25')
-    parser.add_argument('-m', '--method', default='CWLS', help="""
-    dki fit method, default CWLS, support  CWLS, WLS, OLS, CLS
+    parser.add_argument('-m', '--method', default='OLS', help="""
+    dki fit method, default OLS, support OLS, ULLS, WLS, WLLS, UWLLS, CLS, CWLS
     """)
 
 def main():

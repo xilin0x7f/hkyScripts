@@ -18,7 +18,7 @@ def dmri_amico_fit(dwi_path, bvec_path, bval_path, mask_path, model_name="NODDI"
     ae.fit()
     ae.save_results()
 
-def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki", fwhm=1.25, method='CWLS'):
+def dmri_dki_fit(dwi_path, bvec_path, bval_path, mask_path, out_prefix="dki", fwhm=1.25, method='OLS'):
     from dipy.core.gradients import gradient_table
     from dipy.io.gradients import read_bvals_bvecs
     from dipy.reconst.dki import DiffusionKurtosisModel
