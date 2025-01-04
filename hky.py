@@ -6,7 +6,10 @@ import inspect
 from hkypy.cifti_func import cifti_array2map
 from hkypy.dwi_fit import dmri_amico_fit, dmri_dki_fit
 from hkypy.surface_func import surface_get_parc_coord
-from hkypy.volume_func import volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere
+from hkypy.volume_func import (
+    volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere,
+    volume_frame_intensity_censoring
+)
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report
 from hkypy.utils import get_motion
@@ -185,6 +188,14 @@ def setup_volume_create_sphere(subparsers):
     parser.add_argument("y", type=float, help='y mm coord')
     parser.add_argument("z", type=float, help='z mm coord')
     parser.add_argument("r", type=float, help="radius")
+
+def setup_volume_frame_intensity_censoring(subparsers):
+    parser = subparsers.add_parser('volume-frame-intensity-censoring', help='volume frame intensity censoring')
+    parser.set_defaults(func=arg_extractor(volume_frame_intensity_censoring))
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("mask_path", help="mask path")
+    parser.add_argument("out_path", help="out path")
+    parser.add_argument("thresh", type=float, help='threshold value')
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")

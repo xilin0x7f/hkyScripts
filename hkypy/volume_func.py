@@ -111,3 +111,32 @@ def volume_create_sphere(volume_path, out_path, x, y, z, r):
     coords = (affine @ np.vstack((i.ravel(), j.ravel(), k.ravel(), np.ones(mask.size))))[:3, :].T
     mask[cdist(coord, coords, metric='euclidean')[0] < r] = 1
     nib.save(nib.Nifti1Image(mask.reshape(data.shape[:3]), affine), out_path)
+
+def volume_frame_intensity_censoring(volume_path, mask_path, out_path, thresh=0.005):
+    volume_file = nib.load(volume_path)
+    mask_file = nib.load(mask_path)
+    assert np.all(volume_file.affine == mask_file.affine)
+    volume_data, mask_data = volume_file.get_fdata(), mask_file.get_fdata().astype(bool)
+    while True:
+        delta_signal = np.diff(volume_data, axis=3)
+
+        rms_change = (
+            np.sqrt(np.mean(delta_signal[mask_data, :] ** 2, axis=0)) /
+            np.mean(volume_data[mask_data, :-1], axis=0)
+        )
+
+        del_idx = np.where(rms_change > thresh)[0]
+        if len(del_idx) == 0:
+            break
+
+        del_idx = np.unique(np.concatenate([del_idx - 1, del_idx, del_idx + 1]))
+        del_idx = del_idx[np.bitwise_and(del_idx != -1, del_idx < volume_data.shape[3])]
+        if len(del_idx) == volume_data.shape[3]:
+            print('will delete all frames')
+
+        volume_data = np.delete(volume_data, del_idx, axis=3)
+        print(f'Deleted {len(del_idx)} frames')
+
+    volume_data = np.zeros_like(mask_data) if volume_data.size == 0 else volume_data
+    nib.save(nib.Nifti1Image(volume_data, volume_file.affine), out_path)
+
