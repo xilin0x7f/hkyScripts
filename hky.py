@@ -12,7 +12,7 @@ from hkypy.volume_func import (
 )
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report
-from hkypy.utils import get_motion
+from hkypy.utils import get_motion, get_matrix_tril, matrix_tril_to_matrix
 from hkypy.cifti_func import cifti_report, cifti_surface_zscore
 
 def arg_extractor(func):
@@ -196,6 +196,29 @@ def setup_volume_frame_intensity_censoring(subparsers):
     parser.add_argument("mask_path", help="mask path")
     parser.add_argument("out_path", help="out path")
     parser.add_argument("thresh", type=float, help='threshold value')
+
+def setup_get_matrix_tril(subparsers):
+    parser = subparsers.add_parser('get-matrix-tril', help="""
+    convert lower triangular of symmetric matrix to text file, example:
+    hky.py get-matrix-tril [-diag] res.txt a.txt b.txt c.txt
+    """)
+    parser.set_defaults(func=arg_extractor(get_matrix_tril))
+    parser.add_argument('-diag', action='store_true',
+                        help='-diag to get diag of matrix, default is not diag, i.e. off diagonal'
+                        )
+    parser.add_argument("out_path", help="out path")
+    parser.add_argument("matrix_paths", nargs='+', help="matrix path")
+
+def setup_matrix_tril_to_matrix(subparsers):
+    parser = subparsers.add_parser('matrix-tril-to-matrix', help="""
+    convert lower triangular of symmetric matrix to matrix, example:
+    hky.py matrix-tril-to-matrix [-diag] res.txt output_prefix
+    """)
+    parser.set_defaults(func=arg_extractor(matrix_tril_to_matrix))
+    parser.add_argument('-diag', action='store_true',
+                        help='-diag to get diag of matrix, default is not diag, i.e. off diagonal')
+    parser.add_argument("tril_path", help="tril path")
+    parser.add_argument("out_prefix", default='matrix', help="out prefix, default matrix")
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")
