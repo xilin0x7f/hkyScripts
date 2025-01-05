@@ -199,7 +199,7 @@ def setup_volume_frame_intensity_censoring(subparsers):
 
 def setup_get_matrix_tril(subparsers):
     parser = subparsers.add_parser('get-matrix-tril', help="""
-    convert lower triangular of symmetric matrix to text file, example:
+    get lower triangular of symmetric matrix to text file, example:
     hky.py get-matrix-tril [-diag] res.txt a.txt b.txt c.txt
     """)
     parser.set_defaults(func=arg_extractor(get_matrix_tril))
@@ -211,7 +211,7 @@ def setup_get_matrix_tril(subparsers):
 
 def setup_matrix_tril_to_matrix(subparsers):
     parser = subparsers.add_parser('matrix-tril-to-matrix', help="""
-    convert lower triangular of symmetric matrix to matrix, example:
+    convert lower triangular of symmetric matrix from text file to matrix files, example:
     hky.py matrix-tril-to-matrix [-diag] res.txt output_prefix
     """)
     parser.set_defaults(func=arg_extractor(matrix_tril_to_matrix))
