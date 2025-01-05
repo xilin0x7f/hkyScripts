@@ -34,5 +34,5 @@ def matrix_tril_to_matrix(tril_path, diag=False, out_prefix='matrix'):
         matrix = np.zeros((shape, shape))
         matrix[np.triu_indices_from(matrix, k=0 if diag else 1)] = tril[i, :]
         matrix = matrix + matrix.T
-        matrix = matrix - np.diag(np.diag(matrix)) if diag else matrix
+        matrix = matrix - np.diag(np.diag(matrix))/2 if diag else matrix
         np.savetxt(f'{out_prefix}_{i+1}.txt', matrix)
