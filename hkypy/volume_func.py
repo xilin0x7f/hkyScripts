@@ -75,6 +75,8 @@ def volume_4d2rgb(volume_path, out_path):
 def volume_extract(volume_path, mask_path, out_path=None):
     volume_img = nib.load(volume_path)
     mask_img = nib.load(mask_path)
+    if np.linalg.norm(volume_img.affine - mask_img.affine) > 1e-6:
+        raise ValueError("data and mask do not have the same affine")
     volume_data = volume_img.get_fdata()
     mask_data = mask_img.get_fdata()
     if out_path is not None:
