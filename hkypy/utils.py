@@ -27,8 +27,7 @@ def matrix_tril_to_matrix(tril_path, diag=False, out_prefix='matrix'):
     tril = np.loadtxt(tril_path)
     if tril.ndim == 1:
         tril = tril.reshape(1, -1)
-    width = np.ceil(np.log10(tril.shape[0])).astype(int)
-    width = width + 1 if width == 0 else width
+    width = np.ceil(np.log10(tril.shape[0])).astype(int) + 1
     shape = np.round(0.5 + np.sqrt(1 + 8 * tril.shape[1])/2).astype(int)
     shape = shape - 1 if diag else shape
     for i in range(tril.shape[0]):
