@@ -87,7 +87,7 @@ def setup_text_combat(subparsers):
     parser.add_argument('-con', '--con', default=None, help='continuous')
     parser.add_argument('-cat', '--cat', default=None, help='categorical')
     parser.add_argument('-n', '--neb', help='-n not use eb; else use eb', action='store_false', dest='eb')
-    parser.add_argument('-f', '--factor', default=0, help='factor, set 0 to auto estimate, default is 0', type=int)
+    parser.add_argument('-f', '--factor', default=0, help='factor, set 0 to auto estimate, default is 0', type=float)
 
 def setup_volume_combat(subparsers):
     parser = subparsers.add_parser("volume-combat", help="volume combat")
@@ -100,7 +100,7 @@ def setup_volume_combat(subparsers):
     parser.add_argument('-con', '--con', default=None, help='continuous')
     parser.add_argument('-cat', '--cat', default=None, help='categorical')
     parser.add_argument('-n', '--neb', help='-n not use eb; else use eb', action='store_false', dest='eb')
-    parser.add_argument('-f', '--factor', default=0, help='factor, set 0 (default) to auto estimate', type=int)
+    parser.add_argument('-f', '--factor', default=0, help='factor, set 0 (default) to auto estimate', type=float)
 
 def setup_metric_report(subparsers):
     parser = subparsers.add_parser("metric-report", help="""
