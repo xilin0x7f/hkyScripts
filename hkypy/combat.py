@@ -14,7 +14,7 @@ def combat(data4combat, covars, batch='site', con=None, cat=None, eb=True, facto
             if len(data4combat[data4combat < 0]) != 0:
                 median_neg = np.median(data4combat[data4combat < 0])
 
-        factor = np.ceil(
+        factor = (
             1000 * (2 - np.isnan([median_pos, median_neg]).sum()) /
             np.nansum([median_pos, -1 * median_neg])
         )
