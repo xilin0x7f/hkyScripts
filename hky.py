@@ -188,6 +188,8 @@ def setup_volume_create_sphere(subparsers):
     parser.add_argument("y", type=float, help='y mm coord')
     parser.add_argument("z", type=float, help='z mm coord')
     parser.add_argument("r", type=float, help="radius")
+    parser.add_argument("-e", '--equal', action='store_true',
+                        help="less or equal, default is less, add -e to use less or equal")
 
 def setup_volume_frame_intensity_censoring(subparsers):
     parser = subparsers.add_parser('volume-frame-intensity-censoring', help='volume frame intensity censoring')
