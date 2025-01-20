@@ -8,7 +8,7 @@ from hkypy.dwi_fit import dmri_amico_fit, dmri_dki_fit
 from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import (
     volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere,
-    volume_frame_intensity_censoring
+    volume_frame_intensity_censoring, volume_reset_idx
 )
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report
@@ -221,6 +221,17 @@ def setup_matrix_tril_to_matrix(subparsers):
                         help='-diag to get diag of matrix, default is not diag, i.e. off diagonal')
     parser.add_argument("tril_path", help="tril path")
     parser.add_argument("out_prefix", default='matrix', help="out prefix, default matrix")
+
+def setup_volume_reset_idx(subparsers):
+    parser = subparsers.add_parser('volume-reset-idx', help="""
+    reset idx of volume sphere mask by mm coord, example:
+    hky.py nary.nii.gz info.csv nary_reset.nii.gz
+    In info.csv, it should have cluster_idx, x, y, z columns to def new cluster_idx
+    """)
+    parser.set_defaults(func=arg_extractor(volume_reset_idx))
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("info_path", help="info path, a csv file")
+    parser.add_argument("out_path", help="out path")
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")

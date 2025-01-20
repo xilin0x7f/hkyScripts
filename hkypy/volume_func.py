@@ -146,3 +146,30 @@ def volume_frame_intensity_censoring(volume_path, mask_path, out_path, thresh=0.
     volume_data = np.zeros_like(mask_data) if volume_data.size == 0 else volume_data
     nib.save(nib.Nifti1Image(volume_data, volume_file.affine), out_path)
 
+def volume_reset_idx(volume_path, info_path, out_path):
+    import pandas as pd
+    nii_file = nib.load(volume_path)
+    nii_info = pd.read_csv(info_path)
+    nii_data = nii_file.get_fdata()
+
+    coord_real = np.hstack([
+        nii_info[['x', 'y', 'z']].to_numpy().reshape(-1, 3),
+        np.ones(len(nii_info))[:, np.newaxis]
+    ])
+
+    coord_voxel = np.round(
+        (np.linalg.inv(nii_file.affine) @ coord_real.T).T[:, :3]
+    ).astype(int)
+
+    if np.min(nii_data) < 0:
+        raise ValueError('Nii data must be non-negative')
+
+    nii_data = -1 * nii_data
+    for idx in range(len(nii_info)):
+        nii_data[nii_data == nii_data[*coord_voxel[idx]]] = nii_info['cluster_idx'][idx]
+
+    if np.min(nii_data) < 0:
+        print('some clusters were not assigned, will remove them')
+        nii_data[nii_data < 0] = 0
+
+    nib.save(nib.Nifti1Image(nii_data, nii_file.affine), out_path)
