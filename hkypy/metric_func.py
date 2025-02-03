@@ -118,3 +118,6 @@ def metric_report(metric_path, surface_path, atlas_path, threshold, minimum_area
             columns=['cluster idx', 'region', 'area']
         )
         cluster_area_info_all.to_csv(out_prefix + f'_darray-{darray_idx}_cluster_info_area.csv', index=False)
+
+def metric_extract(metric_path, atlas_path, out_path, weight_path=None):
+    raise NotImplementedError

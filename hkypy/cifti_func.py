@@ -371,3 +371,6 @@ def cifti_surface_zscore(cifti_path, out_path, mask_path=None, weight_path=None)
     img.nifti_header.set_intent('ConnDenseScalar')
 
     nib.save(img, out_path)
+
+def cifti_extract(cifti_path, atlas_path, out_path, weight_path=None):
+    raise NotImplementedError

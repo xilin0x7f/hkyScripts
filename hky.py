@@ -11,9 +11,9 @@ from hkypy.volume_func import (
     volume_frame_intensity_censoring, volume_reset_idx
 )
 from hkypy.combat import text_combat, volume_combat
-from hkypy.metric_func import metric_report
+from hkypy.metric_func import metric_report, metric_extract
 from hkypy.utils import get_motion, get_matrix_tril, matrix_tril_to_matrix
-from hkypy.cifti_func import cifti_report, cifti_surface_zscore
+from hkypy.cifti_func import cifti_report, cifti_surface_zscore, cifti_extract
 
 def arg_extractor(func):
     def wrapper(args):
@@ -232,6 +232,30 @@ def setup_volume_reset_idx(subparsers):
     parser.add_argument("volume_path", help="volume path")
     parser.add_argument("info_path", help="info path, a csv file")
     parser.add_argument("out_path", help="out path")
+
+def setup_metric_extract(subparsers):
+    parser = subparsers.add_parser('metric-extract', help="""
+    extract mean value from a metric file, example:
+    hky.py metric-extract metric.func.gii atlas.func.gii res.csv -a area.shape.gii
+    """)
+    parser.set_defaults(func=arg_extractor(metric_extract))
+    parser.add_argument("metric_path", help="metric path")
+    parser.add_argument('atlas_path', help="atlas path")
+    parser.add_argument("out_path", help="out path")
+    parser.add_argument('weight_path', help="weight path", nargs='?', default=None)
+
+def setup_cifti_extract(subparsers):
+    parser = subparsers.add_parser('cifti-extract', help="""
+    extract mean value from a metric file, example:
+    hky.py cifti-extract cifti.dscalar.nii atlas.dscalar.nii res.csv -w weight.dscalar.nii
+    """)
+    parser.set_defaults(func=arg_extractor(cifti_extract))
+    parser.add_argument("cifti_path", help="cifti path")
+    parser.add_argument('atlas_path', help="atlas path")
+    parser.add_argument("out_path", help="out path")
+    parser.add_argument('weight_path', help="weight path", nargs='?', default=None)
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")
