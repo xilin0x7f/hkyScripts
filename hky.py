@@ -255,8 +255,6 @@ def setup_cifti_extract(subparsers):
     parser.add_argument("out_path", help="out path")
     parser.add_argument('weight_path', help="weight path", nargs='?', default=None)
 
-
-
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")
     subparsers = parser.add_subparsers(dest="command", required=True, help="Subcommand to run")
