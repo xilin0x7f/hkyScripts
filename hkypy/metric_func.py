@@ -120,4 +120,24 @@ def metric_report(metric_path, surface_path, atlas_path, threshold, minimum_area
         cluster_area_info_all.to_csv(out_prefix + f'_darray-{darray_idx}_cluster_info_area.csv', index=False)
 
 def metric_extract(metric_path, atlas_path, out_path, weight_path=None):
-    raise NotImplementedError
+    import pandas as pd
+    metric_file = nib.load(metric_path)
+    metric_data = np.vstack([arr.data for arr in metric_file.darrays])
+    atlas_data = nib.load(atlas_path).darrays[0].data
+    weight_data = nib.load(weight_path).darrays[0].data if weight_path is not None else None
+    result = []
+    atlas_indices = np.setdiff1d(np.unique(atlas_data), 0)
+    if weight_data is not None:
+        metric_data = metric_data * weight_data
+        for idx in atlas_indices:
+            result.append(
+                np.sum(metric_data[:, atlas_data == idx], axis=1) / np.sum(weight_data[atlas_data == idx])
+            )
+    else:
+        for idx in atlas_indices:
+            result.append(
+                np.mean(metric_data[:, atlas_data == idx], axis=1)
+            )
+
+    result_df = pd.DataFrame(np.array(result).T, columns=['cluster' + str(i) for i in atlas_indices])
+    result_df.to_csv(out_path, index=False)
