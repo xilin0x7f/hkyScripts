@@ -7,8 +7,8 @@ from hkypy.cifti_func import cifti_array2map
 from hkypy.dwi_fit import dmri_amico_fit, dmri_dki_fit
 from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import (
-    volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere,
-    volume_frame_intensity_censoring, volume_reset_idx, mni152_to_fsaverage
+    volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere, mni152_to_civet,
+    volume_frame_intensity_censoring, volume_reset_idx, mni152_to_fsaverage, mni152_to_fslr
 )
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report, metric_extract
@@ -264,6 +264,28 @@ def setup_mni152_to_fsaverage(subparsers):
     parser.add_argument("volume_path", help="volume path")
     parser.add_argument("out_prefix", help="out prefix")
     parser.add_argument("-d", "--density", help="fsaverage density: {'3k', '10k', '41k', '164k'}, default 164k", default="164k")
+    parser.add_argument("-m", "--method", help="method, linear or nearest, default linear", default="linear")
+
+def setup_mni152_to_fslr(subparsers):
+    parser = subparsers.add_parser('mni152-to-fslr', help="""
+    convert volume in mni152 space to fslr space, example:
+    hky.py mni152-to-fslr data.nii.gz data_ -d 32k -m linear
+    """)
+    parser.set_defaults(func=arg_extractor(mni152_to_fslr))
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("out_prefix", help="out prefix")
+    parser.add_argument("-d", "--density", help="fslr density: {'32k', '164k'}, default 32k", default="32k")
+    parser.add_argument("-m", "--method", help="method, linear or nearest, default linear", default="linear")
+
+def setup_mni152_to_civet(subparsers):
+    parser = subparsers.add_parser('mni152-to-civet', help="""
+    convert volume in mni152 space to civet space, example:
+    hky.py mni152-to-civet data.nii.gz data_ -d 41k -m linear
+    """)
+    parser.set_defaults(func=arg_extractor(mni152_to_civet))
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("out_prefix", help="out prefix")
+    parser.add_argument("-d", "--density", help="civet density: {'41k'}, default 41k", default="41k")
     parser.add_argument("-m", "--method", help="method, linear or nearest, default linear", default="linear")
 
 def main():

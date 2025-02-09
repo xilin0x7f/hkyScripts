@@ -179,3 +179,15 @@ def mni152_to_fsaverage(volume_path, out_prefix, density='164k', method='linear'
     res_lh, res_rh = mni152_to_fsaverage(volume_path, density, method)
     nib.save(res_lh, f'{out_prefix}lh.func.gii')
     nib.save(res_rh, f'{out_prefix}rh.func.gii')
+
+def mni152_to_fslr(volume_path, out_prefix, density='32k', method='linear'):
+    from neuromaps.transforms import mni152_to_fslr
+    res_lh, res_rh = mni152_to_fslr(volume_path, density, method)
+    nib.save(res_lh, f'{out_prefix}lh.func.gii')
+    nib.save(res_rh, f'{out_prefix}rh.func.gii')
+
+def mni152_to_civet(volume_path, out_prefix, density='41k', method='linear'):
+    from neuromaps.transforms import mni152_to_civet
+    res_lh, res_rh = mni152_to_civet(volume_path, density, method)
+    nib.save(res_lh, f'{out_prefix}lh.func.gii')
+    nib.save(res_rh, f'{out_prefix}rh.func.gii')
