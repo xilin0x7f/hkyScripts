@@ -373,4 +373,73 @@ def cifti_surface_zscore(cifti_path, out_path, mask_path=None, weight_path=None)
     nib.save(img, out_path)
 
 def cifti_extract(cifti_path, atlas_path, out_path, weight_path=None):
-    raise NotImplementedError
+    import pandas as pd
+    cifti_file, atlas_file = nib.load(cifti_path), nib.load(atlas_path)
+    weight_file = nib.load(weight_path) if weight_path is not None else None
+    cf_lh, cf_rh, _, _, cf_vol, cf_mat = cifti_separate(cifti_file)
+    al_lh, al_rh, _, _, al_vol, al_mat = cifti_separate(atlas_file)
+    al_lh, al_rh = al_lh.flatten(), al_rh.flatten()
+    if weight_path is not None:
+        wg_lh, wg_rh, _, _, wg_vol, wg_mat = cifti_separate(weight_file)
+        wg_lh, wg_rh = wg_lh.flatten(), wg_rh.flatten()
+        cf_lh = cf_lh * wg_lh
+        cf_rh = cf_rh * wg_rh
+        result_lh = [
+            np.sum(cf_lh[:, al_lh == idx], axis=1) / np.sum(wg_lh[al_lh == idx])
+            for idx in np.setdiff1d(np.unique(al_lh), 0)
+        ]
+        result_rh = [
+            np.sum(cf_rh[:, al_rh == idx], axis=1) / np.sum(wg_rh[al_rh == idx])
+            for idx in np.setdiff1d(np.unique(al_rh), 0)
+        ]
+    else:
+        result_lh = [
+            np.mean(cf_lh[:, al_lh == idx], axis=1)
+            for idx in np.setdiff1d(np.unique(al_lh), 0)
+        ]
+        result_rh = [
+            np.mean(cf_rh[:, al_rh == idx], axis=1)
+            for idx in np.setdiff1d(np.unique(al_rh), 0)
+        ]
+
+    result_lh_df = pd.DataFrame(np.array(result_lh).T, columns=['lh'+str(i) for i in np.setdiff1d(np.unique(al_lh), 0)])
+    result_rh_df = pd.DataFrame(np.array(result_rh).T, columns=['rh'+str(i) for i in np.setdiff1d(np.unique(al_rh), 0)])
+
+    if cf_vol is not None:
+        # 一致性检查
+        if not np.all(cf_vol.shape[:3] == al_vol.shape[:3]):
+            raise RuntimeError("cifti and atlas volume must have same shape")
+
+        if np.linalg.norm(cf_mat-al_mat) > 1e-6:
+            raise RuntimeError("cifti and atlas volume mat must equal")
+
+        # weight mean
+        if weight_path is not None and wg_vol is not None and (not np.all(np.unique(wg_vol) == 0)):
+            if not np.all(cf_vol.shape[:3] == wg_vol.shape[:3]):
+                raise RuntimeError("cifti and weight volume must have same shape")
+
+            if np.linalg.norm(cf_mat-wg_mat) > 1e-6:
+                raise RuntimeError("cifti and weight volume mat must equal")
+
+            wg_vol, al_vol = wg_vol.flatten(), al_vol.flatten()
+            cf_vol = cf_vol.reshape(-1, cf_vol.shape[3]).T * wg_vol
+            result_vol = [
+                np.sum(cf_vol[:, al_vol == idx], axis=1) / np.sum(wg_vol[al_vol == idx])
+                for idx in np.setdiff1d(np.unique(al_vol), 0)
+            ]
+        else:
+            al_vol = al_vol.flatten()
+            cf_vol = cf_vol.reshape(-1, cf_vol.shape[3]).T
+            result_vol = [
+                np.mean(cf_vol[:, al_vol == idx], axis=1)
+                for idx in np.setdiff1d(np.unique(al_vol), 0)
+            ]
+
+        result_vol_df = pd.DataFrame(
+            np.array(result_vol).T, columns=['vol'+str(i) for i in np.setdiff1d(np.unique(al_vol), 0)]
+        )
+        result_df = pd.concat([result_lh_df, result_rh_df, result_vol_df], axis=1)
+    else:
+        result_df = pd.concat([result_lh_df, result_rh_df], axis=1)
+
+    result_df.to_csv(out_path, index=False)
