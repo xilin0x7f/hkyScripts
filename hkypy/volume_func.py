@@ -173,3 +173,9 @@ def volume_reset_idx(volume_path, info_path, out_path):
         nii_data[nii_data < 0] = 0
 
     nib.save(nib.Nifti1Image(nii_data, nii_file.affine), out_path)
+
+def mni152_to_fsaverage(volume_path, out_prefix, density='164k', method='linear'):
+    from neuromaps.transforms import mni152_to_fsaverage
+    res_lh, res_rh = mni152_to_fsaverage(volume_path, density, method)
+    nib.save(res_lh, f'{out_prefix}lh.func.gii')
+    nib.save(res_rh, f'{out_prefix}rh.func.gii')
