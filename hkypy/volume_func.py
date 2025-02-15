@@ -118,6 +118,31 @@ def volume_create_sphere(volume_path, out_path, x, y, z, r, equal=False):
 
     nib.save(nib.Nifti1Image(mask.reshape(data.shape[:3]), affine), out_path)
 
+def volume_create_rectangle(volume_path, out_path, x, y, z, size, less=True):
+    nii_file = nib.load(volume_path)
+    data = nii_file.get_fdata()
+    affine = nii_file.affine
+    coord = np.array((x, y, z, 1))
+    mask = np.zeros(data.shape[:3])
+    i, j, k = (np.linalg.inv(affine) @ coord)[:3]
+    if len(size) == 1:
+        size = (size[0], size[0], size[0])
+
+    if less:
+        mask[
+            np.ceil(i-size[0]/2).astype(int):np.floor(i+size[0]/2).astype(int),
+            np.ceil(j-size[1]/2).astype(int):np.floor(j+size[1]/2).astype(int),
+            np.ceil(k-size[2]/2).astype(int):np.floor(k+size[2]/2).astype(int)
+        ] = 1
+    else:
+        mask[
+            np.floor(i-size[0]/2).astype(int):np.ceil(i+size[0]/2).astype(int),
+            np.floor(j-size[1]/2).astype(int):np.ceil(j+size[1]/2).astype(int),
+            np.floor(k-size[2]/2).astype(int):np.ceil(k+size[2]/2).astype(int)
+        ] = 1
+
+    nib.save(nib.Nifti1Image(mask, affine), out_path)
+
 def volume_frame_intensity_censoring(volume_path, mask_path, out_path, thresh=0.005):
     volume_file = nib.load(volume_path)
     mask_file = nib.load(mask_path)

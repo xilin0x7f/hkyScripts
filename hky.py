@@ -8,7 +8,7 @@ from hkypy.dwi_fit import dmri_amico_fit, dmri_dki_fit
 from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import (
     volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere, mni152_to_civet,
-    volume_frame_intensity_censoring, volume_reset_idx, mni152_to_fsaverage, mni152_to_fslr
+    volume_frame_intensity_censoring, volume_reset_idx, mni152_to_fsaverage, mni152_to_fslr, volume_create_rectangle
 )
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report, metric_extract
@@ -190,6 +190,19 @@ def setup_volume_create_sphere(subparsers):
     parser.add_argument("r", type=float, help="radius")
     parser.add_argument("-e", '--equal', action='store_true',
                         help="less or equal, default is less, add -e to use less or equal")
+
+def setup_volume_create_rectangle(subparsers):
+    parser = subparsers.add_parser('volume-create-rectangle',
+                                   help='create volume rectangle mask by mm coord of center and size of x, y, z')
+    parser.set_defaults(func=arg_extractor(volume_create_rectangle))
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("out_path", help="out path")
+    parser.add_argument("x", type=float, help='x mm coord')
+    parser.add_argument("y", type=float, help='y mm coord')
+    parser.add_argument("z", type=float, help='z mm coord')
+    parser.add_argument("size", type=float, help="size", nargs='*')
+    parser.add_argument("-l", '--less', action='store_true',
+                        help="less or more, default is more, add -l to use less")
 
 def setup_volume_frame_intensity_censoring(subparsers):
     parser = subparsers.add_parser('volume-frame-intensity-censoring', help='volume frame intensity censoring')
