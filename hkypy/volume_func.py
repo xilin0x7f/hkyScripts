@@ -153,7 +153,7 @@ def volume_frame_intensity_censoring(volume_path, mask_path, out_path, thresh=0.
 
         rms_change = (
             np.sqrt(np.mean(delta_signal[mask_data, :] ** 2, axis=0)) /
-            np.mean(volume_data[mask_data, :-1], axis=0)
+            np.mean(np.abs(volume_data[mask_data, :-1]), axis=0)
         )
 
         del_idx = np.where(rms_change > thresh)[0]
