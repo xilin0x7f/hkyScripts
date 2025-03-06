@@ -307,7 +307,7 @@ def setup_find_index(subparsers):
     """)
     parser.set_defaults(func=arg_extractor(find_index))
     parser.add_argument("volume_path", help="volume path")
-    parser.add_argument("type", help="max or min", dest='arg_type')
+    parser.add_argument("arg_type", help="max or min")
     parser.add_argument("index", help="index {0, 1, 2}", type=int)
 
 def main():
