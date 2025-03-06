@@ -7,7 +7,7 @@ from hkypy.cifti_func import cifti_array2map
 from hkypy.dwi_fit import dmri_amico_fit, dmri_dki_fit
 from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import (
-    volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere, mni152_to_civet,
+    volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere, mni152_to_civet, find_index,
     volume_frame_intensity_censoring, volume_reset_idx, mni152_to_fsaverage, mni152_to_fslr, volume_create_rectangle
 )
 from hkypy.combat import text_combat, volume_combat
@@ -300,6 +300,15 @@ def setup_mni152_to_civet(subparsers):
     parser.add_argument("out_prefix", help="out prefix")
     parser.add_argument("-d", "--density", help="civet density: {'41k'}, default 41k", default="41k")
     parser.add_argument("-m", "--method", help="method, linear or nearest, default linear", default="linear")
+
+def setup_find_index(subparsers):
+    parser = subparsers.add_parser('find-index', help="""
+    find the max/min axis voxel coordinates
+    """)
+    parser.set_defaults(func=arg_extractor(find_index))
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("type", help="max or min", dest='arg_type')
+    parser.add_argument("index", help="index {0, 1, 2}", type=int)
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")

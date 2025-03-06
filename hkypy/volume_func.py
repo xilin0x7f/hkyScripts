@@ -216,3 +216,8 @@ def mni152_to_civet(volume_path, out_prefix, density='41k', method='linear'):
     res_lh, res_rh = mni152_to_civet(volume_path, density, method)
     nib.save(res_lh, f'{out_prefix}lh.func.gii')
     nib.save(res_rh, f'{out_prefix}rh.func.gii')
+
+def find_index(volume_path, arg_type, index):
+    nii_header = nib.load(volume_path)
+    nii_data = nii_header.get_fdata()
+    print(getattr(np.where(nii_data > 0)[index], arg_type)())
