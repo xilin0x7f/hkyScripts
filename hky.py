@@ -9,7 +9,7 @@ from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import (
     volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere, mni152_to_civet, find_index,
     volume_frame_intensity_censoring, volume_reset_idx, mni152_to_fsaverage, mni152_to_fslr, volume_create_rectangle,
-    radiomics_extractor
+    radiomics_extractor, kde_mode_normalize
 )
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report, metric_extract
@@ -320,6 +320,19 @@ def setup_radiomics_extractor(subparsers):
     parser.add_argument("volume_path", help="volume path")
     parser.add_argument("roi_path", help="roi path")
     parser.add_argument("out_path", help="out path")
+
+def setup_kde_mode_normalize(subparsers):
+    parser = subparsers.add_parser('kde-mode-normalize', help="""
+    normalize volume by kde mode
+    """)
+    parser.set_defaults(func=arg_extractor(kde_mode_normalize))
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("mask_path", help="mask path")
+    parser.add_argument("out_prefix", help="out prefix")
+    parser.add_argument("-bw", help="bw", default='normal_reference')
+    parser.add_argument("-bins", help="bins", type=float, default=30)
+
+    # kde_mode_normalize(volume_path, mask_path, out_prefix, bw='normal_reference', bins=30)
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")

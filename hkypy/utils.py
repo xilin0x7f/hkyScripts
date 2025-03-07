@@ -36,3 +36,23 @@ def matrix_tril_to_matrix(tril_path, diag=False, out_prefix='matrix'):
         matrix = matrix + matrix.T
         matrix = matrix - np.diag(np.diag(matrix))/2 if diag else matrix
         np.savetxt(f'{out_prefix}{i+1:0{width}d}.txt', matrix)
+
+def kde_estimate_mode(data, bw='normal_reference', bins=50, out_path='plot.pdf'):
+    import statsmodels.api as sm
+    import matplotlib.pyplot as plt
+    kde = sm.nonparametric.KDEUnivariate(data)
+    try:
+        bw = float(bw)
+    except ValueError:
+        pass
+    kde.fit(kernel='gau', bw=bw)
+    density = kde.density
+    x_kde = kde.support
+    mode = x_kde[np.argmax(density)]
+    plt.plot(x_kde, density, label='KDE')
+    plt.axvline(mode, color='red', linestyle='--', label=f'Mode: {mode:.2f}')
+    plt.hist(data, bins=bins, density=True, alpha=0.5, color='grey', label='Data Histogram')
+    plt.legend()
+    plt.savefig(out_path, format='pdf', bbox_inches='tight')
+    plt.close()
+    return mode
