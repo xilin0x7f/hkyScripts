@@ -8,7 +8,8 @@ from hkypy.dwi_fit import dmri_amico_fit, dmri_dki_fit
 from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import (
     volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere, mni152_to_civet, find_index,
-    volume_frame_intensity_censoring, volume_reset_idx, mni152_to_fsaverage, mni152_to_fslr, volume_create_rectangle
+    volume_frame_intensity_censoring, volume_reset_idx, mni152_to_fsaverage, mni152_to_fslr, volume_create_rectangle,
+    radiomics_extractor
 )
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report, metric_extract
@@ -309,6 +310,16 @@ def setup_find_index(subparsers):
     parser.add_argument("volume_path", help="volume path")
     parser.add_argument("arg_type", help="max or min")
     parser.add_argument("index", help="index {0, 1, 2}", type=int)
+
+def setup_radiomics_extractor(subparsers):
+    parser = subparsers.add_parser('radiomics-extractor', help="""
+    extract radiomics value
+    """)
+    parser.set_defaults(func=arg_extractor(radiomics_extractor))
+    parser.add_argument("config_path", help="config path")
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("roi_path", help="roi path")
+    parser.add_argument("out_path", help="out path")
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")

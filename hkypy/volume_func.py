@@ -221,3 +221,13 @@ def find_index(volume_path, arg_type, index):
     nii_header = nib.load(volume_path)
     nii_data = nii_header.get_fdata()
     print(getattr(np.where(nii_data > 0)[index], arg_type)())
+
+def radiomics_extractor(config_path, volume_path, roi_path, out_path):
+    from radiomics import featureextractor
+    import pandas as pd
+
+    extractor = featureextractor.RadiomicsFeatureExtractor(config_path)
+    fea1 = extractor.execute(volume_path, roi_path)
+    fea1 = pd.DataFrame([fea1])
+    fea1 = fea1.drop(fea1.columns[fea1.columns.str.contains('diagnostics_')], axis=1)
+    fea1.to_csv(out_path, index=False)
