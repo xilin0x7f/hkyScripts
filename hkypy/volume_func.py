@@ -232,9 +232,9 @@ def radiomics_extractor(config_path, volume_path, roi_path, out_path):
     fea1 = fea1.drop(fea1.columns[fea1.columns.str.contains('diagnostics_')], axis=1)
     fea1.to_csv(out_path, index=False)
 
-def kde_mode_normalize(volume_path, mask_path, out_prefix, bw='normal_reference', bins=30):
+def kde_mode_normalize(volume_path, mask_path, out_prefix, bw='normal_reference', bins=30, ignore=None):
     from .utils import kde_estimate_mode
 
     data = volume_extract(volume_path, mask_path)
-    mode = kde_estimate_mode(data, bw, bins, f'{out_prefix}kde.pdf')
+    mode = kde_estimate_mode(data, bw, bins, f'{out_prefix}kde.pdf', ignore=ignore)
     volume_restore(data / mode, mask_path, f'{out_prefix}normalized.nii.gz')

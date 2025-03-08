@@ -37,9 +37,13 @@ def matrix_tril_to_matrix(tril_path, diag=False, out_prefix='matrix'):
         matrix = matrix - np.diag(np.diag(matrix))/2 if diag else matrix
         np.savetxt(f'{out_prefix}{i+1:0{width}d}.txt', matrix)
 
-def kde_estimate_mode(data, bw='normal_reference', bins=50, out_path='plot.pdf'):
+def kde_estimate_mode(data, bw='normal_reference', bins=50, out_path='plot.pdf', ignore=None):
     import statsmodels.api as sm
     import matplotlib.pyplot as plt
+    from scipy.signal import argrelextrema
+
+    # for local minima
+    # argrelextrema(x, np.less)
     kde = sm.nonparametric.KDEUnivariate(data)
     try:
         bw = float(bw)
@@ -48,7 +52,15 @@ def kde_estimate_mode(data, bw='normal_reference', bins=50, out_path='plot.pdf')
     kde.fit(kernel='gau', bw=bw)
     density = kde.density
     x_kde = kde.support
-    mode = x_kde[np.argmax(density)]
+    local_maxima = argrelextrema(density, np.greater)[0]
+    print(local_maxima)
+    print(x_kde[local_maxima])
+    # 如果有ignore参数并且可以则用略过前n个的极大值点后的极值点占的最大值，如果不能ignore则用众数
+    if ignore is not None and len(local_maxima) > ignore:
+        mode = x_kde[local_maxima[ignore:][np.argmax(density[local_maxima[ignore:]])]]
+    else:
+        mode = x_kde[np.argmax(density)]
+
     plt.plot(x_kde, density, label='KDE')
     plt.axvline(mode, color='red', linestyle='--', label=f'Mode: {mode:.2f}')
     plt.hist(data, bins=bins, density=True, alpha=0.5, color='grey', label='Data Histogram')

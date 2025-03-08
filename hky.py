@@ -331,6 +331,8 @@ def setup_kde_mode_normalize(subparsers):
     parser.add_argument("out_prefix", help="out prefix")
     parser.add_argument("-bw", help="bw", default='normal_reference')
     parser.add_argument("-bins", help="bins", type=float, default=30)
+    parser.add_argument("-ignore", help="ignore top -ignore mode", type=int, default=None)
+
 
     # kde_mode_normalize(volume_path, mask_path, out_prefix, bw='normal_reference', bins=30)
 
