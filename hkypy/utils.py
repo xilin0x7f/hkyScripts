@@ -61,7 +61,7 @@ def kde_estimate_mode(data, bw='normal_reference', bins=50, out_prefix='kde', ig
     else:
         mode = x_kde[np.argmax(density)]
 
-    np.savetxt(f'{out_prefix}mode.txt', np.array(mode)[np.newaxis])
+    np.savetxt(f'{out_prefix}mode.txt', mode[np.newaxis])
 
     plt.plot(x_kde, density, label='KDE')
     plt.axvline(mode, color='red', linestyle='--', label=f'Mode: {mode:.2f}')
