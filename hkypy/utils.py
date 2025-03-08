@@ -53,8 +53,8 @@ def kde_estimate_mode(data, bw='normal_reference', bins=50, out_path='plot.pdf',
     density = kde.density
     x_kde = kde.support
     local_maxima = argrelextrema(density, np.greater)[0]
-    print(local_maxima)
-    print(x_kde[local_maxima])
+    # print(local_maxima)
+    # print(x_kde[local_maxima])
     # 如果有ignore参数并且可以则用略过前n个的极大值点后的极值点占的最大值，如果不能ignore则用众数
     if ignore is not None and len(local_maxima) > ignore:
         mode = x_kde[local_maxima[ignore:][np.argmax(density[local_maxima[ignore:]])]]
