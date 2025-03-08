@@ -236,5 +236,5 @@ def kde_mode_normalize(volume_path, mask_path, out_prefix, bw='normal_reference'
     from .utils import kde_estimate_mode
 
     data = volume_extract(volume_path, mask_path)
-    mode = kde_estimate_mode(data, bw, bins, f'{out_prefix}_kde.pdf')
-    volume_restore(data / mode, mask_path, f'{out_prefix}_normalized.nii.gz')
+    mode = kde_estimate_mode(data, bw, bins, f'{out_prefix}kde.pdf')
+    volume_restore(data / mode, mask_path, f'{out_prefix}normalized.nii.gz')
