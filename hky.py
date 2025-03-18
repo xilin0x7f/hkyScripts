@@ -165,7 +165,10 @@ def setup_cifti_surface_zscore(subparsers):
     parser.add_argument("-w", "--weight_path", help="weight path")
 
 def setup_dmri_dki_fit(subparsers):
-    parser = subparsers.add_parser("dmri-dki-fit", help='dmri dki fit')
+    parser = subparsers.add_parser("dmri-dki-fit", help="""
+    dmri dki fit, 
+    KT: xxxx yyyy zzzz xxxy xxxz xyyy yyyz xzzz yzzz xxyy xxzz yyzz xxyz xyyz xyzz
+    """)
     parser.set_defaults(func=arg_extractor(dmri_dki_fit))
     parser.add_argument("dwi_path", help="dmri path")
     parser.add_argument('bvec_path', help='bvec path')
