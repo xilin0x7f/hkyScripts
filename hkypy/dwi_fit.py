@@ -43,7 +43,7 @@ def dmri_dki_fit(
 
     dki_model = DiffusionKurtosisModel(gtab, fit_method=method)
     dki_fit = dki_model.fit(data_smooth, mask=mask)
-    for index in ['fa', 'md', 'ad', 'rd', 'kfa', 'mkt', 'mk', 'ak', 'rk']:
+    for index in ['fa', 'md', 'ad', 'rd', 'kfa', 'mkt', 'mk', 'ak', 'rk', 'kt']:
         index_data = getattr(dki_fit, index)
         if index in ['mkt', 'mk', 'ak', 'rk']:
             index_data = index_data(min_kurtosis=min_kurtosis, max_kurtosis=max_kurtosis)
