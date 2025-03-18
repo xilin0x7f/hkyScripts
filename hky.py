@@ -171,7 +171,7 @@ def setup_dmri_dki_fit(subparsers):
     parser.add_argument('bvec_path', help='bvec path')
     parser.add_argument('bval_path', help='bval path')
     parser.add_argument("mask_path", help="mask path")
-    parser.add_argument("out_prefix", default='dki_', help="out prefix, default dki")
+    parser.add_argument("out_prefix", default='dki', nargs="?", help="out prefix, default dki")
     parser.add_argument('-f', '--fwhm', default=1.25, type=float,
                         help='fwhm for smooth, set 0 to no smooth, default 1.25')
     parser.add_argument('-m', '--method', default='WLS', help="""
