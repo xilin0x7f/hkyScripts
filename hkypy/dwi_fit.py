@@ -53,4 +53,4 @@ def dmri_dki_fit(
         #     ]
         #     for arr2 in index_data
         # ])
-        nib.save(nib.Nifti1Image(index_data, affine), out_prefix + "_" + index.upper() + ".nii.gz")
+        nib.save(nib.Nifti1Image(index_data, affine), out_prefix + index.upper() + ".nii.gz")
