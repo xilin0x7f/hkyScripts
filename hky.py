@@ -3,6 +3,8 @@
 import argparse
 import inspect
 
+from numba import double
+
 from hkypy.cifti_func import cifti_array2map
 from hkypy.dwi_fit import dmri_amico_fit, dmri_dki_fit
 from hkypy.surface_func import surface_get_parc_coord
@@ -13,7 +15,7 @@ from hkypy.volume_func import (
 )
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report, metric_extract
-from hkypy.utils import get_motion, get_matrix_tril, matrix_tril_to_matrix
+from hkypy.utils import get_motion, get_matrix_tril, matrix_tril_to_matrix, make_wordcloud
 from hkypy.cifti_func import cifti_report, cifti_surface_zscore, cifti_extract
 
 def arg_extractor(func):
@@ -335,6 +337,19 @@ def setup_kde_mode_normalize(subparsers):
     parser.add_argument("-bw", help="bw", default='normal_reference')
     parser.add_argument("-bins", help="bins", type=float, default=30)
     parser.add_argument("-ignore", help="ignore top -ignore mode", type=int, default=None)
+
+def setup_make_wordcloud(subparsers):
+    parser = subparsers.add_parser('make-wordcloud', help="""
+    make wordcloud""")
+    parser.set_defaults(func=arg_extractor(make_wordcloud))
+    parser.add_argument("path", help="a csv path that contains word name and freq")
+    parser.add_argument("out_path", help="out path of tiff plot")
+    parser.add_argument('-n', '--name', help='name of word in csv table', default='name')
+    parser.add_argument('-f', '--freq', help="freq of word in csv table", default='freq')
+    parser.add_argument('-rev', action='store_true', help='-rev to reverse freq')
+    parser.add_argument('-t', '--top', help='top word to show freq', default=3, type=int)
+    parser.add_argument('--ndigits', help='ndigits to show freq', default=3, type=int)
+    parser.add_argument('--fontsize', help='fontsize to show freq', default=12, type=float)
 
 
 def main():

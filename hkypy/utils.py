@@ -70,3 +70,39 @@ def kde_estimate_mode(data, bw='normal_reference', bins=50, out_prefix='kde', ig
     plt.savefig(f'{out_prefix}kde.pdf', format='pdf', bbox_inches='tight')
     plt.close()
     return mode
+
+def make_wordcloud(path, out_path, name='name', freq='freq', rev=False, top=3, ndigits=3, fontsize=12):
+    import matplotlib.pyplot as plt
+    from wordcloud import WordCloud
+    from mpl_toolkits.axes_grid1.inset_locator import inset_axes
+
+    weight_df = pd.read_csv(path)
+
+    word_weights = dict(zip(weight_df[name], 1 / weight_df[freq] if rev else weight_df[freq]))
+
+    wordcloud = WordCloud(
+        width=8000, height=6000, background_color='white', random_state=0
+    ).generate_from_frequencies(word_weights)
+
+    top_words = sorted(word_weights.items(), key=lambda x: x[1], reverse=True)[:top]
+    top_words_text = ", ".join([f"{word}: {round(1 / freq if rev else freq, ndigits)}" for word, freq in top_words])
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.imshow(wordcloud, interpolation='bilinear')
+    ax.axis('off')
+
+    axins = inset_axes(ax, width="100%", height="15%", loc='lower center', borderpad=-5)
+
+    axins.axis('off')
+    axins.set_facecolor((0, 0, 0, 0))
+
+    axins.annotate(
+        top_words_text, xy=(0.5, 0.5), xycoords='axes fraction', fontsize=fontsize, ha='center', va='center', color='black'
+    )
+
+    rect = plt.Rectangle((0, 0.25), 1, 0.5, transform=axins.transAxes,
+                         fill=False, edgecolor='black', linestyle='dashed')
+
+    axins.add_patch(rect)
+
+    fig.savefig(out_path, format="tiff", dpi=600, pil_kwargs={"compression": "tiff_lzw"})
