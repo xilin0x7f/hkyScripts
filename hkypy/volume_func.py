@@ -238,3 +238,46 @@ def kde_mode_normalize(volume_path, mask_path, out_prefix, bw='normal_reference'
     data = volume_extract(volume_path, mask_path)
     mode = kde_estimate_mode(data, bw, bins, out_prefix, ignore=ignore)
     volume_restore(data / mode, mask_path, f'{out_prefix}normalized.nii.gz')
+
+def volume_cosine_distances(volume_path, out_path, masks_path, threshold=10, not_fisher=False):
+    from sklearn.metrics.pairwise import cosine_distances
+
+    data_header = nib.load(volume_path)
+    masks_header = [nib.load(mask_path) for mask_path in masks_path]
+
+    if np.max([np.linalg.norm(data_header.affine - mask_header.affine) for mask_header in masks_header]) > 0:
+        raise ValueError('The data and masks are not aligned')
+
+    data = data_header.get_fdata()
+    data = np.nan_to_num(data)
+    masks_data = [mask_header.get_fdata() for mask_header in masks_header]
+
+    if not np.all([np.all(data.shape[:3] == mask_data.shape) for mask_data in masks_data]):
+        raise ValueError('The shape of data and masks are not same')
+
+    data = data.reshape(np.prod(data.shape[:3]), -1)
+    masks_data = [mask_data.reshape(-1) for mask_data in masks_data]
+
+    data1 = data[masks_data[0] > 0, :]
+    data2 = data[masks_data[1] > 0, :] if len(masks_data) > 1 else data1
+
+    # calc row-wise corr coef of data1 with data2, input: data1, data2, output: corr_matrix,
+    data1_centered = data1 - np.mean(data1, axis=1, keepdims=True)
+    data2_centered = data2 - np.mean(data2, axis=1, keepdims=True)
+    cov = data1_centered @ data2_centered.T
+    data1_std = np.sqrt(np.sum(data1_centered ** 2, axis=1))
+    data2_std = np.sqrt(np.sum(data2_centered ** 2, axis=1))
+    std_prod = data1_std[:, None] @ data2_std[None, :]
+    corr_matrix = cov / std_prod
+    # calc corr coef end
+
+    threshold_value = np.sort(corr_matrix, axis=1)[:, -1 * np.ceil(corr_matrix.shape[1] * threshold / 100).astype(int)]
+    corr_matrix_threshold = corr_matrix.copy()
+    corr_matrix_threshold[corr_matrix < threshold_value[:, None]] = 0
+
+    if not_fisher:
+        res = cosine_distances(corr_matrix_threshold)
+    else:
+        res = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix_threshold)))
+
+    np.savetxt(out_path, res)

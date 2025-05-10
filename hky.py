@@ -11,7 +11,7 @@ from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import (
     volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere, mni152_to_civet, find_index,
     volume_frame_intensity_censoring, volume_reset_idx, mni152_to_fsaverage, mni152_to_fslr, volume_create_rectangle,
-    radiomics_extractor, kde_mode_normalize
+    radiomics_extractor, kde_mode_normalize, volume_cosine_distances
 )
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report, metric_extract
@@ -350,6 +350,21 @@ def setup_make_wordcloud(subparsers):
     parser.add_argument('-t', '--top', help='top word to show freq', default=3, type=int)
     parser.add_argument('--ndigits', help='ndigits to show freq', default=3, type=int)
     parser.add_argument('--fontsize', help='fontsize to show freq', default=12, type=float)
+
+def setup_volume_cosine_distance(subparsers):
+    parser = subparsers.add_parser('volume-cosine-distance', help="""
+    calculate volume cosine distance of data in two mask, usage:
+    hky.py volume-cosine-distance bold.nii.gz res1.txt hipp.nii.gz grey_nohipp.nii.gz
+    hky.py volume-cosine-distance bold.nii.gz res1.txt hipp.nii.gz
+    hky.py volume-cosine-distance bold.nii.gz res1.txt hipp.nii.gz -n
+    """)
+    parser.set_defaults(func=arg_extractor(volume_cosine_distances))
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("out_path", help="out path")
+    parser.add_argument("masks_path", help="masks path", nargs='+')
+    parser.add_argument("-t", '--threshold', help="only keep top threshold% of corr_matrix, default: 10",
+                        type=float, default=10)
+    parser.add_argument('-n', '--not_fisher', help="not fisher z transform", action='store_true')
 
 
 def main():
