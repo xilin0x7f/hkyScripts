@@ -280,8 +280,8 @@ def volume_cosine_distances(volume_path, out_path, masks_path, threshold=10, not
     corr_matrix = np.nan_to_num(corr_matrix)
 
     if not_fisher:
-        res = cosine_distances(corr_matrix)
+        corr_matrix = cosine_distances(corr_matrix)
     else:
-        res = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix)))
+        corr_matrix = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix)))
 
-    np.savetxt(out_path, res)
+    np.savetxt(out_path, corr_matrix)

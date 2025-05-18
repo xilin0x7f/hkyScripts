@@ -471,11 +471,11 @@ def cifti_cosine_distances(cifti_path, out_path, masks_path, threshold=5, not_fi
     corr_matrix = np.nan_to_num(corr_matrix)
 
     if not_fisher:
-        res = cosine_distances(corr_matrix)
+        corr_matrix = cosine_distances(corr_matrix)
     else:
-        res = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix)))
+        corr_matrix = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix)))
 
-    np.savetxt(out_path, res)
+    np.savetxt(out_path, corr_matrix)
 
 def cifti_restore(data, mask_path, out_path, transpose=False):
     import os
