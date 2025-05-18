@@ -3,8 +3,6 @@
 import argparse
 import inspect
 
-from numba import double
-
 from hkypy.cifti_func import cifti_array2map
 from hkypy.dwi_fit import dmri_amico_fit, dmri_dki_fit
 from hkypy.surface_func import surface_get_parc_coord
@@ -16,7 +14,7 @@ from hkypy.volume_func import (
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report, metric_extract
 from hkypy.utils import get_motion, get_matrix_tril, matrix_tril_to_matrix, make_wordcloud
-from hkypy.cifti_func import cifti_report, cifti_surface_zscore, cifti_extract
+from hkypy.cifti_func import cifti_report, cifti_surface_zscore, cifti_extract, cifti_cosine_distances, cifti_restore
 
 def arg_extractor(func):
     def wrapper(args):
@@ -365,6 +363,33 @@ def setup_volume_cosine_distance(subparsers):
     parser.add_argument("-t", '--threshold', help="only keep top threshold% of corr_matrix, default: 10",
                         type=float, default=10)
     parser.add_argument('-n', '--not_fisher', help="not fisher z transform", action='store_true')
+    parser.add_argument('-s', '--save-corr', action='store_true', help="save corr_matrix to out_path")
+
+def setup_cifti_cosine_distance(subparsers):
+    parser = subparsers.add_parser('cifti-cosine-distance', help="""
+    calculate cifti cosine distance of data in two mask, usage:
+    hky.py cifti-cosine-distance bold.dscalar.nii res1.txt roi1.dscalar.nii roi2.dscalar.nii
+    hky.py cifti-cosine-distance bold.dscalar.nii res1.txt roi1.dscalar.nii
+    hky.py cifti-cosine-distance bold.dscalar.nii res1.txt roi1.nii.gz -n
+    """)
+    parser.set_defaults(func=arg_extractor(cifti_cosine_distances))
+    parser.add_argument("cifti_path", help="cifti path")
+    parser.add_argument("out_path", help="out path")
+    parser.add_argument("masks_path", help="masks path", nargs='+')
+    parser.add_argument("-t", '--threshold', help="only keep top threshold% of corr_matrix, default: 10",
+                        type=float, default=10)
+    parser.add_argument('-n', '--not_fisher', help="not fisher z transform", action='store_true')
+    parser.add_argument('-s', '--save-corr', action='store_true', help="save corr_matrix")
+
+def setup_cifti_restore(subparsers):
+    parser = subparsers.add_parser('cifti-restore', help="""
+    restore cifti data by a mask file
+    """)
+    parser.set_defaults(func=arg_extractor(cifti_restore))
+    parser.add_argument("data", help="txt format data path or a data")
+    parser.add_argument("mask_path", help="mask path")
+    parser.add_argument("out_path", help="out path")
+    parser.add_argument('-t', '--transpose', action='store_true', help='transpose data')
 
 
 def main():

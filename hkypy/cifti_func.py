@@ -443,3 +443,60 @@ def cifti_extract(cifti_path, atlas_path, out_path, weight_path=None):
         result_df = pd.concat([result_lh_df, result_rh_df], axis=1)
 
     result_df.to_csv(out_path, index=False)
+
+def cifti_cosine_distances(cifti_path, out_path, masks_path, threshold=5, not_fisher=False, save_corr=False):
+    from .utils import column_wise_corr, row_wise_threshold
+    from sklearn.metrics.pairwise import cosine_distances
+
+    cifti = nib.load(cifti_path)
+    mask1 = nib.load(masks_path[0])
+    if len(masks_path) > 1:
+        mask2 = nib.load(masks_path[1])
+    else:
+        mask2 = mask1
+
+    if not brain_models_are_equal(cifti.header, mask1.header) & brain_models_are_equal(cifti.header, mask2.header):
+        raise ValueError('brain models are not equal')
+
+    data1 = cifti.get_fdata()[:, mask1.get_fdata().flatten() > 0]
+    data2 = cifti.get_fdata()[:, mask2.get_fdata().flatten() > 0]
+
+    corr_matrix = column_wise_corr(data1, data2)
+    corr_matrix = np.nan_to_num(corr_matrix)
+
+    if save_corr:
+        np.savetxt(out_path.replace('.txt', '_corr_matrix.txt'), corr_matrix)
+
+    corr_matrix_threshold = row_wise_threshold(corr_matrix, threshold=threshold)
+    corr_matrix_threshold = np.nan_to_num(corr_matrix_threshold)
+
+    if not_fisher:
+        res = cosine_distances(corr_matrix_threshold)
+    else:
+        res = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix_threshold)))
+
+    np.savetxt(out_path, res)
+
+def cifti_restore(data, mask_path, out_path, transpose=False):
+    import os
+    if isinstance(data, str) and os.path.exists(data):
+        data = np.loadtxt(data)
+
+    mask = nib.load(mask_path)
+    if data.ndim == 1:
+        data = data.reshape(1, -1)
+
+    if transpose:
+        data = data.T
+
+    data_out = np.zeros([data.shape[0], mask.get_fdata().shape[1]])
+    data_out[:] = np.nan
+
+    data_out[:, mask.get_fdata().flatten() > 0] = data
+
+    ax0 = nib.cifti2.cifti2_axes.ScalarAxis(name=[f"#{i+1}" for i in range(data.shape[0])])
+    ax1 = mask.header.get_axis(1)
+    header = nib.Cifti2Header.from_axes((ax0, ax1))
+    img = nib.Cifti2Image(data_out, header)
+
+    nib.save(img, out_path)

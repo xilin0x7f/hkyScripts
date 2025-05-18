@@ -106,3 +106,43 @@ def make_wordcloud(path, out_path, name='name', freq='freq', rev=False, top=3, n
     axins.add_patch(rect)
 
     fig.savefig(out_path, format="tiff", dpi=600, pil_kwargs={"compression": "tiff_lzw"})
+
+def column_wise_corr(a, b):
+    """
+    :param a: size n*x
+    :param b: size n*y
+    :return: corr_matrix, size x * y, corr_matrix[i, j] is the correlation between a[: i] and b[: j]
+    """
+    a_centered = a - np.mean(a, axis=0)
+    b_centered = b - np.mean(b, axis=0)
+    cov = b_centered.T @ a_centered
+
+    a_std = np.sqrt(np.sum(a_centered ** 2, axis=0))
+    b_std = np.sqrt(np.sum(b_centered ** 2, axis=0))
+
+    std_prod = b_std[None, :].T @ a_std[None, :]
+    corr_matrix = (cov / std_prod).T
+
+    return corr_matrix
+
+def row_wise_threshold(mat, threshold=5):
+    """
+    mat is a 2d matrix, the threshold is in percent. only keep the top threshold percent of each row
+    return: thresholded matrix, view np.nan as -np.inf
+    """
+    flatten = False
+    if mat.ndim == 1:
+        flatten = True
+        mat = mat.reshape(1, -1)
+
+    mat[np.isnan(mat)] = -np.inf
+
+    threshold_value = np.sort(mat, axis=1)[:, -1 * np.ceil(mat.shape[1] * threshold / 100).astype(int)]
+    matrix_threshold = mat.copy()
+    matrix_threshold[mat < threshold_value[:, None]] = np.nan
+    matrix_threshold[np.isinf(matrix_threshold)] = np.nan
+
+    if flatten:
+        return matrix_threshold.flatten()
+    else:
+        return matrix_threshold
