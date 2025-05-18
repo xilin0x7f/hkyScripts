@@ -467,13 +467,13 @@ def cifti_cosine_distances(cifti_path, out_path, masks_path, threshold=5, not_fi
     if save_corr:
         np.savetxt(out_path.replace('.txt', '_corr_matrix.txt'), corr_matrix)
 
-    corr_matrix_threshold = row_wise_threshold(corr_matrix, threshold=threshold)
-    corr_matrix_threshold = np.nan_to_num(corr_matrix_threshold)
+    corr_matrix = row_wise_threshold(corr_matrix, threshold=threshold)
+    corr_matrix = np.nan_to_num(corr_matrix)
 
     if not_fisher:
-        res = cosine_distances(corr_matrix_threshold)
+        res = cosine_distances(corr_matrix)
     else:
-        res = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix_threshold)))
+        res = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix)))
 
     np.savetxt(out_path, res)
 

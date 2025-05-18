@@ -241,6 +241,7 @@ def kde_mode_normalize(volume_path, mask_path, out_prefix, bw='normal_reference'
 
 def volume_cosine_distances(volume_path, out_path, masks_path, threshold=10, not_fisher=False, save_corr=False):
     from sklearn.metrics.pairwise import cosine_distances
+    from .utils import row_wise_threshold
 
     data_header = nib.load(volume_path)
     masks_header = [nib.load(mask_path) for mask_path in masks_path]
@@ -275,13 +276,12 @@ def volume_cosine_distances(volume_path, out_path, masks_path, threshold=10, not
     if save_corr:
         np.savetxt(out_path.replace('.txt', '_corr_matrix.txt'), corr_matrix)
 
-    threshold_value = np.sort(corr_matrix, axis=1)[:, -1 * np.ceil(corr_matrix.shape[1] * threshold / 100).astype(int)]
-    corr_matrix_threshold = corr_matrix.copy()
-    corr_matrix_threshold[corr_matrix < threshold_value[:, None]] = 0
+    corr_matrix = row_wise_threshold(corr_matrix, threshold=threshold)
+    corr_matrix = np.nan_to_num(corr_matrix)
 
     if not_fisher:
-        res = cosine_distances(corr_matrix_threshold)
+        res = cosine_distances(corr_matrix)
     else:
-        res = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix_threshold)))
+        res = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix)))
 
     np.savetxt(out_path, res)
