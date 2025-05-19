@@ -500,3 +500,53 @@ def cifti_restore(data, mask_path, out_path, transpose=False):
     img = nib.Cifti2Image(data_out, header)
 
     nib.save(img, out_path)
+
+def cifti_gradient(
+    cifti_path, out_prefix, masks_path, threshold=10, not_fisher=False, n_components=10, method='NA', alpha=0.5,
+    ref=None, n_iter=100
+):
+    from sklearn.metrics.pairwise import cosine_distances
+    from .utils import column_wise_corr, row_wise_threshold
+    from mapalign import embed
+
+    cifti = nib.load(cifti_path)
+    mask1 = nib.load(masks_path[0])
+    if len(masks_path) > 1:
+        mask2 = nib.load(masks_path[1])
+    else:
+        mask2 = mask1
+
+    if not brain_models_are_equal(cifti.header, mask1.header) & brain_models_are_equal(cifti.header, mask2.header):
+        raise ValueError('brain models are not equal')
+
+    data1 = cifti.get_fdata()[:, mask1.get_fdata().flatten() > 0]
+    data2 = cifti.get_fdata()[:, mask2.get_fdata().flatten() > 0]
+
+    corr_matrix = column_wise_corr(data1, data2)
+    corr_matrix = np.nan_to_num(corr_matrix)
+
+    corr_matrix = row_wise_threshold(corr_matrix, threshold=threshold)
+    corr_matrix = np.nan_to_num(corr_matrix)
+
+    if not not_fisher:
+        corr_matrix = np.nan_to_num(np.arctanh(corr_matrix))
+
+    match method:
+        case 'CS':
+            aff = 1 - cosine_distances(corr_matrix)
+        case 'NA':
+            aff = 1 - cosine_distances(corr_matrix)
+            aff = 1 - (np.arccos(aff) / np.pi)
+        case _:
+            raise ValueError('method is not valid')
+
+    emb, res = embed.compute_diffusion_map(aff, n_components=n_components, alpha=alpha, return_result=True)
+    np.savetxt(out_prefix + 'emb.txt', emb)
+    np.savetxt(out_prefix + 'lambdas.txt', res['lambdas'])
+
+    if ref is not None:
+        ref = np.loadtxt(ref)
+        from brainspace.gradient import ProcrustesAlignment
+        pa = ProcrustesAlignment(n_iter=n_iter)
+        pa.fit([ref, emb])
+        np.savetxt(out_prefix + 'emb_aligned.txt', pa.aligned_[1])

@@ -279,9 +279,73 @@ def volume_cosine_distances(volume_path, out_path, masks_path, threshold=10, not
     corr_matrix = row_wise_threshold(corr_matrix, threshold=threshold)
     corr_matrix = np.nan_to_num(corr_matrix)
 
-    if not_fisher:
-        corr_matrix = cosine_distances(corr_matrix)
-    else:
-        corr_matrix = cosine_distances(np.nan_to_num(np.arctanh(corr_matrix)))
+    if not not_fisher:
+        corr_matrix = np.nan_to_num(np.arctanh(corr_matrix))
+
+    corr_matrix = cosine_distances(corr_matrix)
 
     np.savetxt(out_path, corr_matrix)
+
+def volume_gradient(
+    volume_path, out_prefix, masks_path, threshold=10, not_fisher=False, n_components=10, random_state=0, method='NA',
+    alpha=0.5, ref=None, n_iter=100
+):
+    from sklearn.metrics.pairwise import cosine_distances
+    from .utils import row_wise_threshold
+    from mapalign import embed
+
+    data_header = nib.load(volume_path)
+    masks_header = [nib.load(mask_path) for mask_path in masks_path]
+
+    if np.max([np.linalg.norm(data_header.affine - mask_header.affine) for mask_header in masks_header]) > 0:
+        raise ValueError('The data and masks are not aligned')
+
+    data = data_header.get_fdata()
+    data = np.nan_to_num(data)
+    masks_data = [mask_header.get_fdata() for mask_header in masks_header]
+
+    if not np.all([np.all(data.shape[:3] == mask_data.shape) for mask_data in masks_data]):
+        raise ValueError('The shape of data and masks are not same')
+
+    data = data.reshape(np.prod(data.shape[:3]), -1)
+    masks_data = [mask_data.reshape(-1) for mask_data in masks_data]
+
+    data1 = data[masks_data[0] > 0, :]
+    data2 = data[masks_data[1] > 0, :] if len(masks_data) > 1 else data1
+
+    # calc row-wise corr coef of data1 with data2, input: data1, data2, output: corr_matrix,
+    data1_centered = data1 - np.mean(data1, axis=1, keepdims=True)
+    data2_centered = data2 - np.mean(data2, axis=1, keepdims=True)
+    cov = data1_centered @ data2_centered.T
+    data1_std = np.sqrt(np.sum(data1_centered ** 2, axis=1))
+    data2_std = np.sqrt(np.sum(data2_centered ** 2, axis=1))
+    std_prod = data1_std[:, None] @ data2_std[None, :]
+    corr_matrix = cov / std_prod
+    corr_matrix = np.nan_to_num(corr_matrix)
+    # calc corr coef end
+
+    corr_matrix = row_wise_threshold(corr_matrix, threshold=threshold)
+    corr_matrix = np.nan_to_num(corr_matrix)
+
+    if not not_fisher:
+        corr_matrix = np.nan_to_num(np.arctanh(corr_matrix))
+
+    match method:
+        case 'CS':
+            aff = 1 - cosine_distances(corr_matrix)
+        case 'NA':
+            aff = 1 - cosine_distances(corr_matrix)
+            aff = 1 - (np.arccos(aff) / np.pi)
+        case _:
+            raise ValueError('method is not valid')
+
+    emb, res = embed.compute_diffusion_map(aff, n_components=n_components, alpha=alpha, return_result=True)
+    np.savetxt(out_prefix + 'emb.txt', emb)
+    np.savetxt(out_prefix + 'lambdas.txt', res['lambdas'])
+
+    if ref is not None:
+        ref = np.loadtxt(ref)
+        from brainspace.gradient import ProcrustesAlignment
+        pa = ProcrustesAlignment(n_iter=n_iter)
+        pa.fit([ref, emb])
+        np.savetxt(out_prefix + 'emb_aligned.txt', pa.aligned_[1])

@@ -9,12 +9,14 @@ from hkypy.surface_func import surface_get_parc_coord
 from hkypy.volume_func import (
     volume_fpca, volume_4d2rgb, volume_extract, volume_restore, volume_create_sphere, mni152_to_civet, find_index,
     volume_frame_intensity_censoring, volume_reset_idx, mni152_to_fsaverage, mni152_to_fslr, volume_create_rectangle,
-    radiomics_extractor, kde_mode_normalize, volume_cosine_distances
+    radiomics_extractor, kde_mode_normalize, volume_cosine_distances, volume_gradient
 )
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report, metric_extract
 from hkypy.utils import get_motion, get_matrix_tril, matrix_tril_to_matrix, make_wordcloud
-from hkypy.cifti_func import cifti_report, cifti_surface_zscore, cifti_extract, cifti_cosine_distances, cifti_restore
+from hkypy.cifti_func import (
+    cifti_report, cifti_surface_zscore, cifti_extract, cifti_cosine_distances, cifti_restore, cifti_gradient
+)
 
 def arg_extractor(func):
     def wrapper(args):
@@ -363,7 +365,7 @@ def setup_volume_cosine_distance(subparsers):
     parser.add_argument("-t", '--threshold', help="only keep top threshold% of corr_matrix, default: 10",
                         type=float, default=10)
     parser.add_argument('-n', '--not_fisher', help="not fisher z transform", action='store_true')
-    parser.add_argument('-s', '--save-corr', action='store_true', help="save corr_matrix to out_path")
+    parser.add_argument('-s', '--save_corr', action='store_true', help="save corr_matrix to out_path")
 
 def setup_cifti_cosine_distance(subparsers):
     parser = subparsers.add_parser('cifti-cosine-distance', help="""
@@ -379,7 +381,7 @@ def setup_cifti_cosine_distance(subparsers):
     parser.add_argument("-t", '--threshold', help="only keep top threshold% of corr_matrix, default: 10",
                         type=float, default=10)
     parser.add_argument('-n', '--not_fisher', help="not fisher z transform", action='store_true')
-    parser.add_argument('-s', '--save-corr', action='store_true', help="save corr_matrix")
+    parser.add_argument('-s', '--save_corr', action='store_true', help="save corr_matrix")
 
 def setup_cifti_restore(subparsers):
     parser = subparsers.add_parser('cifti-restore', help="""
@@ -391,6 +393,38 @@ def setup_cifti_restore(subparsers):
     parser.add_argument("out_path", help="out path")
     parser.add_argument('-t', '--transpose', action='store_true', help='transpose data')
 
+def setup_cifti_gradient(subparser):
+    parser = subparser.add_parser('cifti-gradient', help="""
+    hky.py cifti-gradient data.dscalar.nii tmp_ CC.dscalar.nii CTX_noCC.dscalar.nii
+    """)
+    parser.set_defaults(func=arg_extractor(cifti_gradient))
+    parser.add_argument("cifti_path", help="cifti path")
+    parser.add_argument("out_prefix", help="out prefix")
+    parser.add_argument("masks_path", help="masks path", nargs='+')
+    parser.add_argument('-n', '--not_fisher', help="not fisher z transform", action='store_true')
+    parser.add_argument("-t", '--threshold', help="only keep top threshold% of corr_matrix, default: 10",
+                        type=float, default=10)
+    parser.add_argument('-m', '--method',
+                        help="method {NA: normalized angle, CS: cosine similarity}, default NA", default='NA')
+    parser.add_argument('-a', '--alpha', help="alpha, default 0.5", type=float, default=0.5)
+    parser.add_argument('-r', '--ref', help="ref, default None", default=None)
+    parser.add_argument('-i', '--n_iter', help="n_iter, default 100", type=int, default=100)
+
+def setup_volume_gradient(subparser):
+    parser = subparser.add_parser('volume-gradient', help="""
+    """)
+    parser.set_defaults(func=arg_extractor(volume_gradient))
+    parser.add_argument("volume_path", help="volume path")
+    parser.add_argument("out_prefix", help="out prefix")
+    parser.add_argument("masks_path", help="masks path", nargs='+')
+    parser.add_argument('-n', '--not_fisher', help="not fisher z transform", action='store_true')
+    parser.add_argument("-t", '--threshold', help="only keep top threshold% of corr_matrix, default: 10",
+                        type=float, default=10)
+    parser.add_argument('-m', '--method',
+                        help="method {NA: normalized angle, CS: cosine similarity}, default NA", default='NA')
+    parser.add_argument('-a', '--alpha', help="alpha, default 0.5", type=float, default=0.5)
+    parser.add_argument('-r', '--ref', help="ref, default None", default=None)
+    parser.add_argument('-i', '--n_iter', help="n_iter, default 100", type=int, default=100)
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")
