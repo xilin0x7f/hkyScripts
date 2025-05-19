@@ -342,7 +342,6 @@ def volume_gradient(
     emb, res = embed.compute_diffusion_map(aff, n_components=n_components, alpha=alpha, return_result=True)
     np.savetxt(out_prefix + 'emb.txt', emb)
     np.savetxt(out_prefix + 'emb_lambda.txt', res['lambdas'])
-    np.savetxt(out_prefix + 'emb_range.txt', np.max(emb, axis=0) - np.min(emb, axis=0))
 
     if ref is not None:
         ref = np.loadtxt(ref)
@@ -350,3 +349,6 @@ def volume_gradient(
         pa = ProcrustesAlignment(n_iter=n_iter)
         pa.fit([ref, emb])
         np.savetxt(out_prefix + 'emb_aligned.txt', pa.aligned_[1])
+        np.savetxt(out_prefix + 'emb_aligned_range.txt',
+                   np.max(pa.aligned_[1], axis=0) - np.min(pa.aligned_[1], axis=0))
+        np.savetxt(out_prefix + 'emb_aligned_std.txt', np.std(pa.aligned_[1], axis=0))

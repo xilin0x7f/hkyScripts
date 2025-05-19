@@ -146,3 +146,21 @@ def row_wise_threshold(mat, threshold=5):
         return matrix_threshold.flatten()
     else:
         return matrix_threshold
+
+def gradient_align(out_prefix, data_path, ref=None, n_iter=100):
+    from brainspace.gradient import ProcrustesAlignment
+
+    data = [np.loadtxt(dp) for dp in data_path]
+    pa = ProcrustesAlignment(n_iter=n_iter)
+    if ref is not None:
+        ref = np.loadtxt(ref)
+        pa.fit(data, ref)
+    else:
+        pa.fit(data)
+
+    width = np.floor(np.log10(len(data))) + 1
+    [np.savetxt(f'{out_prefix}{i+1:0{width}d}.txt', pa.aligned_[i]) for i in range(len(data))]
+
+    data3d = np.array(pa.aligned_)
+    np.savetxt(f'{out_prefix}std.txt', np.std(data3d, axis=1))
+    np.savetxt(f'{out_prefix}range.txt', np.max(data3d, axis=1) - np.min(data3d, axis=1))

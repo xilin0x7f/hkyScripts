@@ -13,7 +13,7 @@ from hkypy.volume_func import (
 )
 from hkypy.combat import text_combat, volume_combat
 from hkypy.metric_func import metric_report, metric_extract
-from hkypy.utils import get_motion, get_matrix_tril, matrix_tril_to_matrix, make_wordcloud
+from hkypy.utils import get_motion, get_matrix_tril, matrix_tril_to_matrix, make_wordcloud, gradient_align
 from hkypy.cifti_func import (
     cifti_report, cifti_surface_zscore, cifti_extract, cifti_cosine_distances, cifti_restore, cifti_gradient
 )
@@ -424,7 +424,16 @@ def setup_volume_gradient(subparser):
                         help="method {NA: normalized angle, CS: cosine similarity}, default NA", default='NA')
     parser.add_argument('-a', '--alpha', help="alpha, default 0.5", type=float, default=0.5)
     parser.add_argument('-r', '--ref', help="ref, default None", default=None)
+
+def setup_gradient_align(subparser):
+    parser = subparser.add_parser('gradient-align', help="""
+    """)
+    parser.set_defaults(func=arg_extractor(gradient_align))
+    parser.add_argument("out_prefix", help="out prefix")
+    parser.add_argument("data_path", help="data path", nargs='+')
+    parser.add_argument('-r', '--ref', help="ref gradient path, default None", default=None)
     parser.add_argument('-i', '--n_iter', help="n_iter, default 100", type=int, default=100)
+
 
 def main():
     parser = argparse.ArgumentParser(description="Author: 赩林, Email: xilin0x7f@163.com")
