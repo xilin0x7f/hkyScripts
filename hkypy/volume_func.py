@@ -341,7 +341,8 @@ def volume_gradient(
 
     emb, res = embed.compute_diffusion_map(aff, n_components=n_components, alpha=alpha, return_result=True)
     np.savetxt(out_prefix + 'emb.txt', emb)
-    np.savetxt(out_prefix + 'lambdas.txt', res['lambdas'])
+    np.savetxt(out_prefix + 'emb_lambda.txt', res['lambdas'])
+    np.savetxt(out_prefix + 'emb_range.txt', np.max(emb, axis=0) - np.min(emb, axis=0))
 
     if ref is not None:
         ref = np.loadtxt(ref)
