@@ -158,7 +158,7 @@ def gradient_align(out_prefix, data_path, ref=None, n_iter=100):
     else:
         pa.fit(data)
 
-    width = np.floor(np.log10(len(data))) + 1
+    width = int(np.floor(np.log10(len(data))) + 1)
     [np.savetxt(f'{out_prefix}{i+1:0{width}d}.txt', pa.aligned_[i]) for i in range(len(data))]
 
     data3d = np.array(pa.aligned_)
